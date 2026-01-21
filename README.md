@@ -32,7 +32,7 @@ Agar buyruqlar qatori (Command Prompt) orqali qilmoqchi bo'lsangiz:
     ```
 2.  Virtual muhitni faollashtiring:
     ```cmd
-    venv\Scripts\activate
+    ./venv/Scripts/activate
     ```
 3.  Kerakli kutubxonalarni o'rnating:
     ```cmd
