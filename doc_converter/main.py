@@ -203,7 +203,21 @@ def convert_to_gift(input_path: str, output_path: str):
             question_text = get_cell_text(cells[1])
             correct_answer = get_cell_text(cells[2])
             
+            question_text = get_cell_text(cells[1])
+            correct_answer = get_cell_text(cells[2])
+            
             if not question_text and not correct_answer: continue
+
+            # Skip header rows
+            # Check for common header terms in Uzbek or English
+            q_lower = question_text.lower()
+            if "savol" in q_lower or "question" in q_lower or "to'g'ri javob" in q_lower:
+                continue
+                
+            # Also check first column if it looks like a header (e.g., "N", "Tr", "№")
+            col1_text = get_cell_text(cells[0]).lower()
+            if col1_text in ["n", "n:", "tr", "№", "#", "no"]:
+                continue
 
             block = []
             block.append(f"::{question_text}{{")
@@ -228,13 +242,13 @@ def convert_to_gift(input_path: str, output_path: str):
 
 async def process_conversion(job_id: str, input_path: str, output_path: str, is_legacy: bool):
     try:
-        update_job_status(job_id, "processing", "Conversion started...")
+        update_job_status(job_id, "processing", "Konvertatsiya boshlandi...")
         
         # Always use the custom logic for both doc and docx
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, convert_to_gift, input_path, output_path)
             
-        update_job_status(job_id, "completed", "Conversion successful")
+        update_job_status(job_id, "completed", "Konvertatsiya muvaffaqiyatli yakunlandi")
     except Exception as e:
         logger.error(f"Conversion failed for {job_id}: {str(e)}")
         update_job_status(job_id, "error", str(e))
@@ -251,7 +265,7 @@ async def upload_file(file: UploadFile = File(...), background_tasks: Background
     ext = os.path.splitext(file.filename)[1].lower()
     
     if ext not in [".doc", ".docx"]:
-        raise HTTPException(status_code=400, detail="Only .doc and .docx files are supported")
+        raise HTTPException(status_code=400, detail="Faqat .doc va .docx fayllar qo'llab-quvvatlanadi")
     
     input_filename = f"{job_id}{ext}"
     input_path = os.path.join(UPLOAD_DIR, input_filename)
@@ -273,29 +287,29 @@ async def upload_file(file: UploadFile = File(...), background_tasks: Background
     is_legacy = ext == ".doc"
     background_tasks.add_task(process_conversion, job_id, input_path, output_path, is_legacy)
     
-    return {"job_id": job_id, "message": "File uploaded and conversion started"}
+    return {"job_id": job_id, "message": "Fayl yuklandi va konvertatsiya boshlandi"}
 
 @app.get("/status/{job_id}")
 async def check_status(job_id: str):
     job = get_job(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="Topshiriq topilmadi")
     return job
 
 @app.get("/download/{job_id}")
 async def download_file(job_id: str):
     job = get_job(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="Topshiriq topilmadi")
         
     if job['status'] != 'completed':
-        raise HTTPException(status_code=400, detail="File not ready yet")
+        raise HTTPException(status_code=400, detail="Fayl hali tayyor emas")
         
     output_filename = f"{job_id}.txt"
     output_path = os.path.join(OUTPUT_DIR, output_filename)
     
     if not os.path.exists(output_path):
-        raise HTTPException(status_code=500, detail="Output file missing")
+        raise HTTPException(status_code=500, detail="Natija fayli topilmadi")
         
     return FileResponse(output_path, media_type='text/plain', filename=f"{os.path.splitext(job['filename'])[0]}.txt")
 
