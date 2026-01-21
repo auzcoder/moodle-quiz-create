@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lux Doc Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .drop-zone {
+            transition: all 0.3s ease;
+            border: 2px dashed rgba(148, 163, 184, 0.2);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #38bdf8, #6366f1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full glass-panel rounded-3xl overflow-hidden relative">
+        <!-- Decorative blobs -->
+        <div
+            class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000">
+        </div>
+
+        <div class="relative z-10 p-8 md:p-12">
+            <header class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                    <span class="gradient-text">Lux Doc Converter</span>
+                </h1>
+                <p class="text-slate-400 text-lg">Premium Document to Text Conversion. Seamless, Fast, Secure.</p>
+            </header>
+
+            <div class="grid md:grid-cols-5 gap-8">
+                <!-- Upload Section -->
+                <div class="md:col-span-3">
+                    <div id="dropZone"
+                        class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group">
+                        <input type="file" id="fileInput"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".doc,.docx">
+                        <div class="text-center p-6 transition-transform group-hover:scale-105">
+                            <div
+                                class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-blue-500/20 transition-all">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-blue-400"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-slate-200 mb-2">Drop your file here</h3>
+                            <p class="text-slate-500 text-sm">Supports .docx and .doc</p>
+                            <button
+                                class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700">
+                                or click to browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info/Status Section -->
+                <div class="md:col-span-2 flex flex-col justify-between space-y-4">
+                    <!-- Features -->
+                    <div class="space-y-4">
+                        <div
+                            class="flex items-center space-x-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-slate-200">Lightning Fast</div>
+                                <div class="text-xs text-slate-500">Instant processing</div>
+                            </div>
+                        </div>
+                        <div
+                            class="flex items-center space-x-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                <i class="fas fa-magic"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-slate-200">Smart Conversion</div>
+                                <div class="text-xs text-slate-500">Preserves text integrity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress & Result Area -->
+            <div id="statusArea" class="mt-8 hidden">
+                <div class="glass-panel p-6 rounded-2xl border border-slate-700/50 bg-slate-800/30">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4 w-full md:w-auto">
+                            <div id="statusIcon"
+                                class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                            <div>
+                                <h4 id="fileName" class="text-lg font-medium text-slate-200 truncate max-w-[200px]">
+                                    document.docx</h4>
+                                <p id="statusText" class="text-sm text-blue-400">Processing...</p>
+                            </div>
+                        </div>
+
+                        <div id="actionArea" class="flex items-center space-x-3 w-full md:w-auto justify-end">
+                            <!-- Download Button (Hidden initially) -->
+                            <a id="downloadBtn" href="#"
+                                class="hidden btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2 shadow-lg shadow-blue-500/30">
+                                <i class="fas fa-download"></i>
+                                <span>Download .TXT</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-4 w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
+                        <div id="progressBar"
+                            class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full w-0 transition-all duration-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const statusArea = document.getElementById('statusArea');
+        const fileNameEl = document.getElementById('fileName');
+        const statusTextEl = document.getElementById('statusText');
+        const statusIconEl = document.getElementById('statusIcon');
+        const progressBar = document.getElementById('progressBar');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Drag and Drop Events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('drag-over');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('drag-over');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files: files } });
+        }
+
+        function handleFiles(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        }
+
+        async function uploadFile(file) {
+            // Reset UI
+            statusArea.classList.remove('hidden');
+            downloadBtn.classList.add('hidden');
+            progressBar.style.width = '10%';
+            fileNameEl.textContent = file.name;
+            statusTextEl.textContent = 'Uploading...';
+            statusIconEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            statusIconEl.className = 'w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const data = await response.json();
+                const jobId = data.job_id;
+
+                statusTextEl.textContent = 'Processing...';
+                progressBar.style.width = '40%';
+
+                pollStatus(jobId);
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusTextEl.textContent = 'Error: ' + error.message;
+                statusTextEl.classList.replace('text-blue-400', 'text-red-400');
+                statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
+                statusIconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                progressBar.style.width = '100%';
+                progressBar.classList.replace('from-blue-500', 'from-red-500');
+                progressBar.classList.replace('to-indigo-500', 'to-red-600');
+            }
+        }
+
+        function pollStatus(jobId) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/status/${jobId}`);
+                    const job = await response.json();
+
+                    if (job.status === 'completed') {
+                        clearInterval(interval);
+                        completeJob(job, jobId);
+                    } else if (job.status === 'error') {
+                        clearInterval(interval);
+                        failJob(job.message);
+                    } else {
+                        // Still processing, maybe animate progress bar vaguely
+                        const currentWidth = parseFloat(progressBar.style.width);
+                        if (currentWidth < 90) {
+                            progressBar.style.width = (currentWidth + 5) + '%';
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 1000);
+        }
+
+        function completeJob(job, jobId) {
+            progressBar.style.width = '100%';
+            statusTextEl.textContent = 'Conversion Complete!';
+            statusTextEl.classList.replace('text-blue-400', 'text-green-400');
+
+            statusIconEl.className = 'w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400';
+            statusIconEl.innerHTML = '<i class="fas fa-check"></i>';
+
+            downloadBtn.href = `/download/${jobId}`;
+            downloadBtn.classList.remove('hidden');
+
+            // Confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function failJob(message) {
+            statusTextEl.textContent = 'Failed: ' + message;
+            statusTextEl.classList.replace('text-blue-400', 'text-red-400');
+            statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
+            statusIconEl.innerHTML = '<i class="fas fa-times"></i>';
+            progressBar.classList.replace('from-blue-500', 'from-red-500');
+            progressBar.classList.replace('to-indigo-500', 'to-red-600');
+            progressBar.style.width = '100%';
+        }
+    </script>
+</body>
+
+</html>
