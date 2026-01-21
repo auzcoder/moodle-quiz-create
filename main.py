@@ -92,51 +92,92 @@ def get_job(job_id: str):
 import base64
 import re
 from bs4 import BeautifulSoup
-import pythoncom
-import win32com.client
+import platform
+import subprocess
 
 def convert_to_gift(input_path: str, output_path: str):
     """
     Converts Word Doc/Docx -> Filtered HTML -> GIFT Format .txt
+    Supports Windows (MS Word) and Linux (LibreOffice).
     """
     abs_input_path = os.path.abspath(input_path)
     base_dir = os.path.dirname(abs_input_path)
     filename = os.path.splitext(os.path.basename(abs_input_path))[0]
+    
+    # We target .htm or .html
     htm_path = os.path.join(base_dir, f"{filename}.htm")
+    html_path = os.path.join(base_dir, f"{filename}.html")
     files_dir = os.path.join(base_dir, f"{filename}_files")
     
-    pythoncom.CoInitialize()
-    word = None
-    try:
-        word = win32com.client.Dispatch("Word.Application")
-        word.Visible = False
-        word.DisplayAlerts = 0 
-        
-        # Open ReadOnly to minimize errors
-        doc = word.Documents.Open(FileName=abs_input_path, ReadOnly=True, Visible=False)
-        
-        # Use SaveAs2 for better compatibility
-        # Ensure path is normalized
-        htm_path = os.path.normpath(htm_path)
-        doc.SaveAs2(FileName=htm_path, FileFormat=10) # 10 = wdFormatFilteredHTML
-        doc.Close(SaveChanges=False)
-    except Exception as e:
-        logger.error(f"Error automating Word: {e}")
-        # Try to retrieve detailed COM error info if available
-        raise e
-    finally:
-        if word:
+    current_os = platform.system()
+    
+    if current_os == "Windows":
+        try:
+            import pythoncom
+            import win32com.client
+            
+            pythoncom.CoInitialize()
+            word = None
             try:
-                word.Quit()
-            except:
-                pass
-        pythoncom.CoUninitialize()
+                word = win32com.client.Dispatch("Word.Application")
+                word.Visible = False
+                word.DisplayAlerts = 0 
+                
+                # Open ReadOnly to minimize errors
+                doc = word.Documents.Open(FileName=abs_input_path, ReadOnly=True, Visible=False)
+                
+                # Use SaveAs2 for better compatibility
+                # Ensure path is normalized
+                htm_path = os.path.normpath(htm_path)
+                doc.SaveAs2(FileName=htm_path, FileFormat=10) # 10 = wdFormatFilteredHTML
+                doc.Close(SaveChanges=False)
+            except Exception as e:
+                logger.error(f"Error automating Word: {e}")
+                raise e
+            finally:
+                if word:
+                    try:
+                        word.Quit()
+                    except:
+                        pass
+                pythoncom.CoUninitialize()
+        except ImportError:
+            logger.error("win32com not found. Please install pywin32.")
+            raise Exception("Windows conversion requires 'pywin32' library.")
 
-    if not os.path.exists(htm_path):
+    else:
+        # Linux / MacOS Logic (LibreOffice)
+        # Requires: sudo apt install libreoffice (on Ubuntu/Debian)
+        logger.info("Running on non-Windows OS. Trying LibreOffice...")
+        try:
+            # --convert-to html:HTML (generic HTML) --outdir ...
+            # LibreOffice usually outputs .html
+            cmd = [
+                "libreoffice", 
+                "--headless", 
+                "--convert-to", 
+                "html", 
+                "--outdir", 
+                base_dir, 
+                abs_input_path
+            ]
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            # LibreOffice typically saves as .html, let's normalize check
+            if os.path.exists(html_path):
+                htm_path = html_path
+                
+        except Exception as e:
+            logger.error(f"LibreOffice conversion failed: {e}")
+            raise Exception("LibreOffice conversion failed. Ensure 'libreoffice' is installed.")
+
+    if not os.path.exists(htm_path) and not os.path.exists(html_path):
         raise Exception("HTML file was not created.")
+        
+    actual_htm_path = htm_path if os.path.exists(htm_path) else html_path
 
     # Parse HTML
-    with open(htm_path, "rb") as f:
+    with open(actual_htm_path, "rb") as f:
         soup = BeautifulSoup(f, "html.parser")
 
     # 1. Clean and Escape Text

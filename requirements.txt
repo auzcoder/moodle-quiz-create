@@ -1,2 +1,6 @@
-pywin32
+fastapi
+uvicorn
+python-multipart
 beautifulsoup4
+aiofiles
+pywin32; sys_platform == 'win32'
