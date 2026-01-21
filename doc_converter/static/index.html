@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lux Doc Converter</title>
+    <title>Moodle Test Konvertori</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -85,9 +85,10 @@
         <div class="relative z-10 p-8 md:p-12">
             <header class="text-center mb-12">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                    <span class="gradient-text">Lux Doc Converter</span>
+                    <span class="gradient-text">Moodle Test Konvertori</span>
                 </h1>
-                <p class="text-slate-400 text-lg">Premium Document to Text Conversion. Seamless, Fast, Secure.</p>
+                <p class="text-slate-400 text-lg">Moodle tizimi uchun .doc va .docx fayllarni test formatiga (.txt)
+                    o'tkazish.</p>
             </header>
 
             <div class="grid md:grid-cols-5 gap-8">
@@ -102,11 +103,11 @@
                                 class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-blue-500/20 transition-all">
                                 <i class="fas fa-cloud-upload-alt text-3xl text-blue-400"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-slate-200 mb-2">Drop your file here</h3>
-                            <p class="text-slate-500 text-sm">Supports .docx and .doc</p>
+                            <h3 class="text-xl font-semibold text-slate-200 mb-2">Faylni shu yerga tashlang</h3>
+                            <p class="text-slate-500 text-sm">.doc va .docx fayllarni qo'llab-quvvatlaydi</p>
                             <button
                                 class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700">
-                                or click to browse
+                                yoki tanlash uchun bosing
                             </button>
                         </div>
                     </div>
@@ -123,8 +124,8 @@
                                 <i class="fas fa-bolt"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-semibold text-slate-200">Lightning Fast</div>
-                                <div class="text-xs text-slate-500">Instant processing</div>
+                                <div class="text-sm font-semibold text-slate-200">Juda Tez</div>
+                                <div class="text-xs text-slate-500">Bir zumda qayta ishlash</div>
                             </div>
                         </div>
                         <div
@@ -134,8 +135,8 @@
                                 <i class="fas fa-magic"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-semibold text-slate-200">Smart Conversion</div>
-                                <div class="text-xs text-slate-500">Preserves text integrity</div>
+                                <div class="text-sm font-semibold text-slate-200">Aqlli Konvertatsiya</div>
+                                <div class="text-xs text-slate-500">Matn yaxlitligini saqlaydi</div>
                             </div>
                         </div>
                     </div>
@@ -154,7 +155,7 @@
                             <div>
                                 <h4 id="fileName" class="text-lg font-medium text-slate-200 truncate max-w-[200px]">
                                     document.docx</h4>
-                                <p id="statusText" class="text-sm text-blue-400">Processing...</p>
+                                <p id="statusText" class="text-sm text-blue-400">Qayta ishlanmoqda...</p>
                             </div>
                         </div>
 
@@ -163,7 +164,7 @@
                             <a id="downloadBtn" href="#"
                                 class="hidden btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2 shadow-lg shadow-blue-500/30">
                                 <i class="fas fa-download"></i>
-                                <span>Download .TXT</span>
+                                <span>Natijani Yuklab Olish</span>
                             </a>
                         </div>
                     </div>
@@ -238,7 +239,7 @@
             downloadBtn.classList.add('hidden');
             progressBar.style.width = '10%';
             fileNameEl.textContent = file.name;
-            statusTextEl.textContent = 'Uploading...';
+            statusTextEl.textContent = 'Yuklanmoqda...';
             statusIconEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             statusIconEl.className = 'w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400';
 
@@ -252,20 +253,20 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Upload failed');
+                    throw new Error('Yuklashda xatolik');
                 }
 
                 const data = await response.json();
                 const jobId = data.job_id;
 
-                statusTextEl.textContent = 'Processing...';
+                statusTextEl.textContent = 'Qayta ishlanmoqda...';
                 progressBar.style.width = '40%';
 
                 pollStatus(jobId);
 
             } catch (error) {
                 console.error('Error:', error);
-                statusTextEl.textContent = 'Error: ' + error.message;
+                statusTextEl.textContent = 'Xatolik: ' + error.message;
                 statusTextEl.classList.replace('text-blue-400', 'text-red-400');
                 statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
                 statusIconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
@@ -302,7 +303,7 @@
 
         function completeJob(job, jobId) {
             progressBar.style.width = '100%';
-            statusTextEl.textContent = 'Conversion Complete!';
+            statusTextEl.textContent = 'Konvertatsiya Yakunlandi!';
             statusTextEl.classList.replace('text-blue-400', 'text-green-400');
 
             statusIconEl.className = 'w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400';
@@ -320,7 +321,7 @@
         }
 
         function failJob(message) {
-            statusTextEl.textContent = 'Failed: ' + message;
+            statusTextEl.textContent = 'Muvaffaqiyatsiz: ' + message;
             statusTextEl.classList.replace('text-blue-400', 'text-red-400');
             statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
             statusIconEl.innerHTML = '<i class="fas fa-times"></i>';
