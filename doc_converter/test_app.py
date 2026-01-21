@@ -23,8 +23,16 @@ def create_dummy_docx(filename):
     doc = word.Documents.Add()
     
     range_ = doc.Range(0, 0)
-    table = doc.Tables.Add(range_, NumRows=2, NumColumns=4)
+    range_ = doc.Range(0, 0)
+    table = doc.Tables.Add(range_, NumRows=3, NumColumns=4)
     
+    # Header Row (Should be skipped)
+    table.Cell(1, 1).Range.Text = "N"
+    table.Cell(1, 2).Range.Text = "Savollar"
+    table.Cell(1, 3).Range.Text = "To'g'ri javob"
+    table.Cell(1, 4).Range.Text = "Xato javob"
+
+    # Data Row
     table.Cell(2, 2).Range.Text = "What is 2+2?"
     table.Cell(2, 3).Range.Text = "4"
     table.Cell(2, 4).Range.Text = "5"

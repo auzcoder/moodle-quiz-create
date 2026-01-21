@@ -112,11 +112,17 @@ def convert_to_gift(input_path: str, output_path: str):
         word.Visible = False
         word.DisplayAlerts = 0 
         
-        doc = word.Documents.Open(abs_input_path)
-        doc.SaveAs(htm_path, FileFormat=10) # 10 = wdFormatFilteredHTML
+        # Open ReadOnly to minimize errors
+        doc = word.Documents.Open(FileName=abs_input_path, ReadOnly=True, Visible=False)
+        
+        # Use SaveAs2 for better compatibility
+        # Ensure path is normalized
+        htm_path = os.path.normpath(htm_path)
+        doc.SaveAs2(FileName=htm_path, FileFormat=10) # 10 = wdFormatFilteredHTML
         doc.Close(SaveChanges=False)
     except Exception as e:
         logger.error(f"Error automating Word: {e}")
+        # Try to retrieve detailed COM error info if available
         raise e
     finally:
         if word:
@@ -209,15 +215,12 @@ def convert_to_gift(input_path: str, output_path: str):
             if not question_text and not correct_answer: continue
 
             # Skip header rows
-            # Check for common header terms in Uzbek or English
+            # Check for common header terms in Uzbek or English (Column 2)
             q_lower = question_text.lower()
             if "savol" in q_lower or "question" in q_lower or "to'g'ri javob" in q_lower:
                 continue
                 
-            # Also check first column if it looks like a header (e.g., "N", "Tr", "№")
-            col1_text = get_cell_text(cells[0]).lower()
-            if col1_text in ["n", "n:", "tr", "№", "#", "no"]:
-                continue
+            # Note: We intentionally ignore Column 1 (cells[0]) as per user request.
 
             block = []
             block.append(f"::{question_text}{{")
