@@ -197,7 +197,7 @@ def convert_to_gift(input_path: str, output_path: str):
 
             def get_cell_text(cell):
                 text = cell.get_text(separator=' ', strip=True)
-                text = re.sub(r'\\s+', ' ', text)
+                text = re.sub(r'\s+', ' ', text)
                 return text
 
             question_text = get_cell_text(cells[1])
@@ -213,11 +213,11 @@ def convert_to_gift(input_path: str, output_path: str):
                 if alt_text:
                     block.append(f"~{alt_text}")
             block.append("}")
-            output_lines.append("\\n".join(block))
+            output_lines.append("\n".join(block))
             output_lines.append("")
 
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write("\\n".join(output_lines))
+        f.write("\n".join(output_lines))
         
     # Cleanup HTM files (Optional, maybe keep for debug?)
     # try:

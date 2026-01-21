@@ -162,4 +162,3 @@ cython_debug/
 # Doc converter
 uploads/
 outputs/
-doc_converter.db
