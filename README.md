@@ -20,29 +20,37 @@ Dastur ishlashi uchun kompyuteringizda quyidagilar bo'lishi kerak:
 
 ### 🪟 Windows Foydalanuvchilari uchun
 
-**Eng oson usul:**
-Loyihaning asosiy papkasidagi `run_app.bat` faylini sichqoncha bilan ikki marta bosing. Bu skript hammasini o'zi bajaradi (o'rnatadi va ishga tushiradi).
+### 🪟 Windows Foydalanuvchilari uchun
 
-**Qo'lda (Manual) o'rnatish:**
-Agar buyruqlar qatori (Command Prompt) orqali qilmoqchi bo'lsangiz:
+**1-usul: Buyruqlar qatori orqali (Qo'lda)**
+Bu usulda siz har bir qadamni o'zingiz bajarasiz. Bu jarayonni tushunish uchun foydali.
 
-1.  Virtual muhit (venv) yarating:
+1.  **Virtual muhit (venv) yaratish**:
+    Loyiha papkasida buyruqlar qatorini (CMD) ochib, quyidagini yozing:
     ```cmd
     python -m venv venv
     ```
-2.  Virtual muhitni faollashtiring:
+2.  **Virtual muhitni faollashtirish**:
     ```cmd
-    ./venv/Scripts/activate
+    venv\Scripts\activate.bat
     ```
-3.  Kerakli kutubxonalarni o'rnating:
+    *(Agar muvaffaqiyatli bo'lsa, qator boshida `(venv)` yozuvi paydo bo'ladi)*
+
+3.  **Kutubxonalarni o'rnatish**:
     ```cmd
     pip install -r requirements.txt
     ```
-4.  Dasturni ishga tushiring:
+4.  **Dasturni ishga tushiring**:
     ```cmd
     uvicorn main:app --reload
     ```
-5.  Brauzerni ochib, ushbu manzilga kiring: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+5.  **Natija**: Brauzerni ochib [http://127.0.0.1:8000](http://127.0.0.1:8000) manziliga kiring.
+
+**2-usul: Avtomatik skript (.bat fayl)**
+Bu eng oson va tez usul.
+1.  Loyiha papkasidagi **`run_app.bat`** faylini toping.
+2.  Uni sichqoncha bilan ikki marta bosing.
+3.  U o'zi avtomatik virtual muhit yaratadi, kerakli narsalarni o'rnatadi va dasturni ishga tushiradi.
 
 ---
 
