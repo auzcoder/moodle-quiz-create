@@ -10,6 +10,7 @@ from typing import Optional
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -299,7 +300,7 @@ async def process_conversion(job_id: str, input_path: str, output_path: str, is_
 
 # --- Endpoints ---
 
-@app.get("/")
+@app.get("/", methods=["GET", "HEAD"])
 async def read_root():
     return FileResponse('static/index.html')
 
