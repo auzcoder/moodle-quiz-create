@@ -162,3 +162,4 @@ cython_debug/
 # Doc converter
 uploads/
 outputs/
+jobs.db
