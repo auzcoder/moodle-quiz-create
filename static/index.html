@@ -111,6 +111,15 @@
                         <span class="font-bold text-slate-100">Homiylik</span>
                     </div>
                 </div>
+
+                <!-- Template Button -->
+                <div onclick="openExampleModal()" class="relative group cursor-pointer hover:scale-105 transition-transform">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200"></div>
+                    <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                        <i class="fas fa-file-word text-teal-400 text-xl"></i>
+                        <span class="font-bold text-slate-100">Namuna</span>
+                    </div>
+                </div>
             </div>
 
             <header class="text-center mb-12">
@@ -268,6 +277,46 @@
 
                 <div class="text-center">
                      <p class="text-slate-500 text-xs italic">"Loyihani rivojlantirishga qo'shgan hissangiz uchun minnatdormiz!"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Example Modal -->
+    <div id="exampleModal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity" onclick="closeExampleModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4 max-h-screen overflow-y-auto">
+            <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl p-6 md:p-8">
+                <!-- Close Button -->
+                <button onclick="closeExampleModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-10 h-10 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <div class="flex flex-col md:flex-row gap-8">
+                    <!-- Text Side -->
+                    <div class="md:w-1/3 flex flex-col justify-center">
+                         <div class="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
+                            <i class="fas fa-file-contract text-3xl text-teal-400"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold text-white mb-4">To'g'ri Format</h3>
+                        <p class="text-slate-400 text-lg mb-8 leading-relaxed">
+                            Moodle tizimiga yuklash uchun testlaringiz o'ng tomondagi namunadagi kabi bo'lishi lozim. 
+                            Jadvallar va rasmlar to'g'ri joylashishiga e'tibor bering.
+                        </p>
+                        
+                        <a href="/static/example.docx" download class="group w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl font-bold text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 transition-all flex items-center justify-center">
+                            <i class="fas fa-download mr-3 group-hover:scale-110 transition-transform"></i>
+                            Shablonni Yuklab Olish (Docx)
+                        </a>
+                    </div>
+
+                    <!-- Image Side -->
+                    <div class="md:w-2/3 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-inner">
+                        <img src="/static/example.png" alt="Test namuna formati" class="w-full h-auto object-contain">
+                    </div>
                 </div>
             </div>
         </div>
@@ -455,6 +504,23 @@
 
         function closeDonateModal() {
             const modal = document.getElementById('donateModal');
+            modal.classList.add('hidden');
+        }
+
+        // Example Modal Functions
+        function openExampleModal() {
+            const modal = document.getElementById('exampleModal');
+            modal.classList.remove('hidden');
+            // Animate entry
+            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+                modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeExampleModal() {
+             const modal = document.getElementById('exampleModal');
             modal.classList.add('hidden');
         }
     </script>
