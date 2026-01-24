@@ -822,12 +822,9 @@ async def register_page():
 async def pass_restore_page():
     return FileResponse('templates/auth/pass-restore.html')
 
-@app.get("/register")
-async def register_page():
-    return FileResponse('templates/auth/register.html')
-
-@app.get("/pass-restore")
-async def pass_restore_page():
+@app.get("/profile")
+async def profile_page():
+    return FileResponse('templates/auth/profile.html')
     return FileResponse('templates/auth/pass-restore.html')
 
 @app.get("/admin")
@@ -836,6 +833,9 @@ async def admin_dashboard():
 
 # --- Admin API Models ---
 class UserUpdate(BaseModel):
+    full_name: str
+    email: str
+    phone: str
     role: int
     tariff_id: int
 
@@ -883,11 +883,15 @@ async def update_user(user_id: int, data: UserUpdate):
             new_expires = datetime.datetime.now() + datetime.timedelta(days=duration)
             cur.execute("""
                 UPDATE users 
-                SET role = %s, tariff_id = %s, tariff_expires_at = %s 
+                SET full_name = %s, email = %s, phone = %s, role = %s, tariff_id = %s, tariff_expires_at = %s 
                 WHERE id = %s
-            """, (data.role, data.tariff_id, new_expires, user_id))
+            """, (data.full_name, data.email, data.phone, data.role, data.tariff_id, new_expires, user_id))
         else:
-             cur.execute("UPDATE users SET role = %s, tariff_id = %s WHERE id = %s", (data.role, data.tariff_id, user_id))
+             cur.execute("""
+                UPDATE users 
+                SET full_name = %s, email = %s, phone = %s, role = %s, tariff_id = %s 
+                WHERE id = %s
+             """, (data.full_name, data.email, data.phone, data.role, data.tariff_id, user_id))
              
         conn.commit()
         return {"message": "User updated"}

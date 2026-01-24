@@ -88,9 +88,19 @@
         <div class="absolute top-4 right-4 z-50">
             <div
                 class="flex items-center gap-3 bg-slate-800/80 backdrop-blur rounded-full p-1 pl-4 border border-slate-700/50">
-                <span class="text-sm font-semibold text-slate-200">{{ user.full_name || 'User' }}</span>
+                <a href="/profile" class="flex flex-col items-end mr-2 group">
+                    <span class="text-xs font-bold text-slate-200 group-hover:text-blue-400 transition-colors">{{
+                        user.full_name || 'User' }}</span>
+                    <span class="text-[10px] text-slate-400">{{ me.tariff_name || 'Free' }} <span
+                            :class="{'text-red-400': me.used_today >= me.daily_limit, 'text-green-400': me.used_today < me.daily_limit}">({{
+                            me.used_today }}/{{ me.daily_limit }})</span></span>
+                </a>
+                <a href="/profile"
+                    class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-slate-800">
+                    {{ (user.full_name || 'U').charAt(0) }}
+                </a>
                 <button @click="logout"
-                    class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                    class="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all ml-1"
                     title="Chiqish">
                     <i class="fas fa-sign-out-alt text-xs"></i>
                 </button>
@@ -178,7 +188,16 @@
 
                     <div class="grid md:grid-cols-5 gap-8">
                         <!-- Upload Section -->
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-3 relative">
+                            <!-- Tariff Badge -->
+                            <div
+                                class="absolute -top-3 right-4 z-10 bg-slate-800 border border-slate-700 rounded-full px-3 py-1 flex items-center gap-2 shadow-lg">
+                                <i class="fas fa-crown text-amber-400 text-xs"></i>
+                                <span class="text-xs font-bold text-slate-300">{{ me.tariff_name || 'Free' }}</span>
+                                <span class="w-px h-3 bg-slate-600"></span>
+                                <span class="text-xs text-slate-400">{{ me.used_today }}/{{ me.daily_limit }}</span>
+                            </div>
+
                             <div class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group"
                                 :class="{ 'active': isDragOver }" @dragover.prevent="isDragOver = true"
                                 @dragleave.prevent="isDragOver = false" @drop.prevent="handleDrop"
@@ -340,6 +359,7 @@
         createApp({
             setup() {
                 const user = ref({});
+                const me = ref({});
                 const stats = ref('...');
                 const isDragOver = ref(false);
                 const fileInput = ref(null);
@@ -358,7 +378,16 @@
                     }
                     user.value = JSON.parse(localStorage.getItem('user') || '{}');
                     fetchStats();
+                    fetchMe();
                 });
+
+                const fetchMe = async () => {
+                    const token = localStorage.getItem('access_token');
+                    try {
+                        const res = await fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) me.value = await res.json();
+                    } catch (e) { }
+                };
 
                 const logout = () => {
                     localStorage.removeItem('access_token');
@@ -396,9 +425,15 @@
 
                     const formData = new FormData();
                     formData.append('file', file);
+                    const token = localStorage.getItem('access_token');
 
                     try {
-                        const res = await fetch('/upload', { method: 'POST', body: formData });
+                        const res = await fetch('/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                        if (res.status === 403) throw new Error('Limit tugagan yoki tarif muddati o\'tgan');
                         if (!res.ok) throw new Error('Yuklash xatosi');
 
                         const data = await res.json();
@@ -460,7 +495,7 @@
                 });
 
                 return {
-                    user, stats, isDragOver, fileInput, activeModal, job, progress,
+                    user, me, stats, isDragOver, fileInput, activeModal, job, progress,
                     logout, showModal, triggerFileInput, handleDrop, handleFiles,
                     statusIcon, statusIconClass, statusTextClass
                 };

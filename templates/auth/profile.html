@@ -41,9 +41,15 @@
                         <p class="text-slate-400 text-sm">{{ user.email }}</p>
                     </div>
                 </div>
-                <a href="/dashboard" class="text-slate-400 hover:text-white transition-colors">
-                    <i class="fas fa-times text-xl"></i>
-                </a>
+                <div class="flex items-center gap-3">
+                    <a v-if="user.role === 1" href="/admin"
+                        class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all text-sm font-bold flex items-center gap-2">
+                        <i class="fas fa-user-shield"></i> Admin Panel
+                    </a>
+                    <a href="/dashboard" class="text-slate-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </a>
+                </div>
             </div>
 
             <!-- Content Grid -->
@@ -63,7 +69,7 @@
                     </div>
                     <div>
                         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Telefon</div>
-                        <div class="text-slate-200 font-medium">+{{ user.phone }}</div>
+                        <div class="text-slate-200 font-medium">{{ formatPhone(user.phone) }}</div>
                     </div>
                     <div>
                         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Status</div>
@@ -156,7 +162,10 @@
                 const formatDate = (dateStr) => {
                     if (!dateStr || dateStr === 'None') return 'Cheksiz';
                     const date = new Date(dateStr);
-                    return date.toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' });
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}.${month}.${year}`;
                 };
 
                 const usagePercent = computed(() => {
@@ -165,7 +174,22 @@
                     return Math.min((used / limit) * 100, 100);
                 });
 
-                return { user, loading, getInitials, formatDate, usagePercent };
+                const formatPhone = (phone) => {
+                    if (!phone) return '';
+                    const cleaned = phone.toString().replace(/\D/g, '');
+                    let match;
+                    if (cleaned.length === 12) {
+                        match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
+                    } else if (cleaned.length === 9) {
+                        match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
+                    } else if (cleaned.length === 7) { // Support short format if enters just local
+                        return phone;
+                    }
+                    if (match) return `+${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
+                    return '+' + phone;
+                };
+
+                return { user, loading, getInitials, formatDate, usagePercent, formatPhone };
             }
         }).mount('#app');
     </script>

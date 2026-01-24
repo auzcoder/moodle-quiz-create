@@ -127,7 +127,7 @@
                         <tr v-for="user in users" :key="user.id">
                             <td class="font-medium text-white">{{ user.full_name }}</td>
                             <td class="text-slate-400">{{ user.email }}</td>
-                            <td class="text-slate-400">{{ user.phone }}</td>
+                            <td class="text-slate-400">{{ formatPhone(user.phone) }}</td>
                             <td>
                                 <span v-if="user.role === 1"
                                     class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Admin</span>
@@ -169,6 +169,7 @@
                         <tr>
                             <th>Nomi</th>
                             <th>Limit (Kunlik)</th>
+                            <th>Muddat (Kun)</th>
                             <th>Holati</th>
                             <th>Amallar</th>
                         </tr>
@@ -177,6 +178,7 @@
                         <tr v-for="tariff in tariffs" :key="tariff.id">
                             <td class="font-bold text-white">{{ tariff.name }}</td>
                             <td class="text-slate-300">{{ tariff.daily_limit }} ta fayl</td>
+                            <td class="text-slate-300">{{ tariff.duration_days }} kun</td>
                             <td>
                                 <span v-if="tariff.is_active"
                                     class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">Active</span>
@@ -201,6 +203,21 @@
             <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-md">
                 <h3 class="text-xl font-bold text-white mb-4">Foydalanuvchini Tahrirlash</h3>
                 <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">To'liq Ism</label>
+                        <input v-model="editingUser.full_name" type="text"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Email</label>
+                        <input v-model="editingUser.email" type="email"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Telefon</label>
+                        <input v-model="editingUser.phone" type="text"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Role</label>
                         <select v-model="editingUser.role"
@@ -244,6 +261,11 @@
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Kunlik Limit</label>
                         <input v-model="editingTariff.daily_limit" type="number"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Muddat (Kun)</label>
+                        <input v-model="editingTariff.duration_days" type="number"
                             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div class="flex items-center gap-2">
@@ -355,11 +377,30 @@
                     } catch (e) { console.error(e); }
                 };
 
+                const formatPhone = (phone) => {
+                    if (!phone) return '';
+                    // Remove non-digits
+                    const cleaned = phone.replace(/\D/g, '');
+                    // Assuming 998XXXXXXXXX format (12 digits) or just XXXXXXXXX (9 digits)
+                    let match;
+                    if (cleaned.length === 12) { // 998901234567
+                        match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
+                    } else if (cleaned.length === 9) { // 901234567
+                        match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
+                    }
+
+                    if (match) {
+                        return `+${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
+                    }
+                    return '+' + phone;
+                };
+
                 return {
                     activeTab, users, tariffs,
                     getTariffName,
                     showUserModal, editingUser, editUser, saveUser,
-                    showTariffModal, editingTariff, openTariffModal, saveTariff
+                    showTariffModal, editingTariff, openTariffModal, saveTariff,
+                    formatPhone
                 };
             }
         }).mount('#app');
