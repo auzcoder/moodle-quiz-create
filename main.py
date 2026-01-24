@@ -5,6 +5,7 @@ import shutil
 import sqlite3
 import datetime
 import logging
+import tempfile
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
@@ -102,188 +103,192 @@ def convert_to_gift(input_path: str, output_path: str):
     Supports Windows (MS Word) and Linux (LibreOffice).
     """
     abs_input_path = os.path.abspath(input_path)
-    base_dir = os.path.dirname(abs_input_path)
-    filename = os.path.splitext(os.path.basename(abs_input_path))[0]
-    
-    # We target .htm or .html
-    htm_path = os.path.join(base_dir, f"{filename}.htm")
-    html_path = os.path.join(base_dir, f"{filename}.html")
-    files_dir = os.path.join(base_dir, f"{filename}_files")
-    
-    current_os = platform.system()
-    
-    if current_os == "Windows":
-        try:
-            import pythoncom
-            import win32com.client
-            
-            pythoncom.CoInitialize()
-            word = None
+    # We will work inside a temporary directory to avoid OneDrive file locking/sync issues
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Copy input file to temp dir
+        filename_ext = os.path.basename(abs_input_path)
+        filename = os.path.splitext(filename_ext)[0]
+        temp_input_path = os.path.join(temp_dir, filename_ext)
+        shutil.copy2(abs_input_path, temp_input_path)
+        
+        base_dir = temp_dir
+        
+        # We target .htm or .html in the temp dir
+        htm_path = os.path.join(base_dir, f"{filename}.htm")
+        html_path = os.path.join(base_dir, f"{filename}.html")
+        files_dir = os.path.join(base_dir, f"{filename}_files")
+        
+        current_os = platform.system()
+        
+        if current_os == "Windows":
             try:
-                word = win32com.client.Dispatch("Word.Application")
-                word.Visible = False
-                word.DisplayAlerts = 0 
+                import pythoncom
+                import win32com.client
                 
-                # Open ReadOnly to minimize errors
-                doc = word.Documents.Open(FileName=abs_input_path, ReadOnly=True, Visible=False)
-                
-                # Use SaveAs2 for better compatibility
-                # Ensure path is normalized
-                htm_path = os.path.normpath(htm_path)
-                doc.SaveAs2(FileName=htm_path, FileFormat=10) # 10 = wdFormatFilteredHTML
-                doc.Close(SaveChanges=False)
-            except Exception as e:
-                logger.error(f"Error automating Word: {e}")
-                raise e
-            finally:
-                if word:
+                pythoncom.CoInitialize()
+                word = None
+                try:
+                    # Use EnsureDispatch for better stability
                     try:
-                        word.Quit()
+                        word = win32com.client.gencache.EnsureDispatch("Word.Application")
                     except:
-                        pass
-                pythoncom.CoUninitialize()
-        except ImportError:
-            logger.error("win32com not found. Please install pywin32.")
-            raise Exception("Windows conversion requires 'pywin32' library.")
+                        word = win32com.client.Dispatch("Word.Application")
+                        
+                    word.Visible = False
+                    word.DisplayAlerts = 0 
+                    
+                    # Open ReadOnly from temp path
+                    doc = word.Documents.Open(FileName=temp_input_path, ReadOnly=True, Visible=False)
+                    
+                    # Handle Protected View if it occurs (though unlikely in temp)
+                    if word.ProtectedViewWindows.Count > 0:
+                         try:
+                             pv = word.ProtectedViewWindows(1)
+                             doc = pv.Edit()
+                         except:
+                             pass
 
-    else:
-        # Linux / MacOS Logic (LibreOffice)
-        # Requires: sudo apt install libreoffice (on Ubuntu/Debian)
-        logger.info("Running on non-Windows OS. Trying LibreOffice...")
-        try:
-            # --convert-to html:HTML (generic HTML) --outdir ...
-            # LibreOffice usually outputs .html
-            cmd = [
-                "libreoffice", 
-                "--headless", 
-                "--convert-to", 
-                "html", 
-                "--outdir", 
-                base_dir, 
-                abs_input_path
-            ]
-            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
-            # LibreOffice typically saves as .html, let's normalize check
-            if os.path.exists(html_path):
-                htm_path = html_path
-                
-        except Exception as e:
-            logger.error(f"LibreOffice conversion failed: {e}")
-            raise Exception("LibreOffice conversion failed. Ensure 'libreoffice' is installed.")
+                    # Use SaveAs2 for better compatibility
+                    htm_path = os.path.normpath(htm_path)
+                    doc.SaveAs2(FileName=htm_path, FileFormat=10) # 10 = wdFormatFilteredHTML
+                    doc.Close(SaveChanges=False)
+                except Exception as e:
+                    logger.error(f"Error automating Word: {e}")
+                    raise e
+                finally:
+                    if word:
+                        try:
+                            word.Quit()
+                        except:
+                            pass
+                    pythoncom.CoUninitialize()
+            except ImportError:
+                logger.error("win32com not found. Please install pywin32.")
+                raise Exception("Windows conversion requires 'pywin32' library.")
 
-    if not os.path.exists(htm_path) and not os.path.exists(html_path):
-        raise Exception("HTML file was not created.")
-        
-    actual_htm_path = htm_path if os.path.exists(htm_path) else html_path
-
-    # Parse HTML
-    with open(actual_htm_path, "rb") as f:
-        soup = BeautifulSoup(f, "html.parser")
-
-    # 1. Clean and Escape Text
-    for text_node in soup.find_all(string=True):
-        if text_node.parent.name in ['script', 'style', 'title', 'meta']:
-            continue
-        if text_node.parent.name == 'span' and 'white-space: nowrap' in str(text_node.parent.get('style', '')):
-             continue
-
-        original_text = str(text_node)
-        new_text = original_text
-        new_text = new_text.replace("ù", "")
-        if "<" in new_text: new_text = new_text.replace("<", "&lt;")
-        if ">" in new_text: new_text = new_text.replace(">", "&gt;")
-        
-        # GIFT Escaping
-        if "{" in new_text: new_text = new_text.replace("{", "\\{")
-        if "}" in new_text: new_text = new_text.replace("}", "\\}")
-        if "=" in new_text: new_text = new_text.replace("=", "\\=")
-        if "~" in new_text: new_text = new_text.replace("~", "\\~")
-        
-        if new_text != original_text:
-            text_node.replace_with(new_text)
-
-    # 2. Convert Images to Base64
-    img_tags = soup.find_all("img")
-    for img in img_tags:
-        src = img.get("src")
-        if not src: continue
-        
-        image_full_path = os.path.join(base_dir, src)
-        if not os.path.exists(image_full_path):
-            possible_name = os.path.basename(src)
-            possible_path = os.path.join(files_dir, possible_name)
-            if os.path.exists(possible_path):
-                image_full_path = possible_path
-
-        if os.path.exists(image_full_path):
+        else:
+            # Linux / MacOS Logic (LibreOffice)
+            logger.info("Running on non-Windows OS. Trying LibreOffice...")
             try:
-                with open(image_full_path, "rb") as img_file:
-                    raw_data = img_file.read()
-                    encoded_string = base64.b64encode(raw_data).decode("utf-8").replace("\n", "").replace("\r", "").replace("=", "\\=")
-                    
-                    mime_type = "image/png"
-                    if image_full_path.lower().endswith((".jpg", ".jpeg")):
-                        mime_type = "image/jpeg"
-                    elif image_full_path.lower().endswith(".gif"):
-                         mime_type = "image/gif"
-                    
-                    code_string = f'<img src\\="data:{mime_type};base64,{encoded_string}">'
-                    img.replace_with(code_string)
-            except Exception as e:
-                logger.warning(f"Could not encode image: {e}")
-
-    # 3. Extract Q&A from Tables
-    output_lines = []
-    tables = soup.find_all("table")
-    
-    for table in tables:
-        rows = table.find_all("tr")
-        for row in rows:
-            cells = row.find_all(["td", "th"])
-            if len(cells) < 3: continue
-
-            def get_cell_text(cell):
-                text = cell.get_text(separator=' ', strip=True)
-                text = re.sub(r'\s+', ' ', text)
-                return text
-
-            question_text = get_cell_text(cells[1])
-            correct_answer = get_cell_text(cells[2])
-            
-            question_text = get_cell_text(cells[1])
-            correct_answer = get_cell_text(cells[2])
-            
-            if not question_text and not correct_answer: continue
-
-            # Skip header rows
-            # Check for common header terms in Uzbek or English (Column 2)
-            q_lower = question_text.lower()
-            if "savol" in q_lower or "question" in q_lower or "to'g'ri javob" in q_lower:
-                continue
+                cmd = [
+                    "libreoffice", 
+                    "--headless", 
+                    "--convert-to", 
+                    "html", 
+                    "--outdir", 
+                    base_dir, 
+                    temp_input_path
+                ]
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 
-            # Note: We intentionally ignore Column 1 (cells[0]) as per user request.
+                if os.path.exists(html_path):
+                    htm_path = html_path
+                    
+            except Exception as e:
+                logger.error(f"LibreOffice conversion failed: {e}")
+                raise Exception("LibreOffice conversion failed. Ensure 'libreoffice' is installed.")
 
-            block = []
-            block.append(f"::{question_text}{{")
-            block.append(f"={correct_answer}")
-            for i in range(3, len(cells)):
-                alt_text = get_cell_text(cells[i])
-                if alt_text:
-                    block.append(f"~{alt_text}")
-            block.append("}")
-            output_lines.append("\n".join(block))
-            output_lines.append("")
+        if not os.path.exists(htm_path) and not os.path.exists(html_path):
+            raise Exception("HTML file was not created.")
+            
+        actual_htm_path = htm_path if os.path.exists(htm_path) else html_path
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(output_lines))
+        # Parse HTML
+        with open(actual_htm_path, "rb") as f:
+            soup = BeautifulSoup(f, "html.parser")
+
+        # 1. Clean and Escape Text
+        for text_node in soup.find_all(string=True):
+            if text_node.parent.name in ['script', 'style', 'title', 'meta']:
+                continue
+            if text_node.parent.name == 'span' and 'white-space: nowrap' in str(text_node.parent.get('style', '')):
+                 continue
+
+            original_text = str(text_node)
+            new_text = original_text
+            new_text = new_text.replace("ù", "")
+            if "<" in new_text: new_text = new_text.replace("<", "&lt;")
+            if ">" in new_text: new_text = new_text.replace(">", "&gt;")
+            
+            # GIFT Escaping
+            if "{" in new_text: new_text = new_text.replace("{", "\\{")
+            if "}" in new_text: new_text = new_text.replace("}", "\\}")
+            if "=" in new_text: new_text = new_text.replace("=", "\\=")
+            if "~" in new_text: new_text = new_text.replace("~", "\\~")
+            
+            if new_text != original_text:
+                text_node.replace_with(new_text)
+
+        # 2. Convert Images to Base64
+        img_tags = soup.find_all("img")
+        for img in img_tags:
+            src = img.get("src")
+            if not src: continue
+            
+            # Image paths are relative to base_dir (temp_dir)
+            image_full_path = os.path.join(base_dir, src)
+            if not os.path.exists(image_full_path):
+                possible_name = os.path.basename(src)
+                possible_path = os.path.join(files_dir, possible_name)
+                if os.path.exists(possible_path):
+                    image_full_path = possible_path
+
+            if os.path.exists(image_full_path):
+                try:
+                    with open(image_full_path, "rb") as img_file:
+                        raw_data = img_file.read()
+                        encoded_string = base64.b64encode(raw_data).decode("utf-8").replace("\n", "").replace("\r", "").replace("=", "\\=")
+                        
+                        mime_type = "image/png"
+                        if image_full_path.lower().endswith((".jpg", ".jpeg")):
+                            mime_type = "image/jpeg"
+                        elif image_full_path.lower().endswith(".gif"):
+                             mime_type = "image/gif"
+                        
+                        code_string = f'<img src\\="data:{mime_type};base64,{encoded_string}">'
+                        img.replace_with(code_string)
+                except Exception as e:
+                    logger.warning(f"Could not encode image: {e}")
+
+        # 3. Extract Q&A from Tables
+        output_lines = []
+        tables = soup.find_all("table")
         
-    # Cleanup HTM files (Optional, maybe keep for debug?)
-    # try:
-    #     os.remove(htm_path)
-    #     shutil.rmtree(files_dir, ignore_errors=True)
-    # except:
-    #     pass
+        for table in tables:
+            rows = table.find_all("tr")
+            for row in rows:
+                cells = row.find_all(["td", "th"])
+                if len(cells) < 3: continue
+
+                def get_cell_text(cell):
+                    text = cell.get_text(separator=' ', strip=True)
+                    text = re.sub(r'\s+', ' ', text)
+                    return text
+
+                question_text = get_cell_text(cells[1])
+                correct_answer = get_cell_text(cells[2])
+                
+                if not question_text and not correct_answer: continue
+
+                # Skip header rows
+                q_lower = question_text.lower()
+                if "savol" in q_lower or "question" in q_lower or "to'g'ri javob" in q_lower:
+                    continue
+                    
+                block = []
+                block.append(f"::{question_text}{{")
+                block.append(f"={correct_answer}")
+                for i in range(3, len(cells)):
+                    alt_text = get_cell_text(cells[i])
+                    if alt_text:
+                        block.append(f"~{alt_text}")
+                block.append("}")
+                output_lines.append("\n".join(block))
+                output_lines.append("")
+
+        # Write final output to the real output path
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(output_lines))
 
 async def process_conversion(job_id: str, input_path: str, output_path: str, is_legacy: bool):
     try:

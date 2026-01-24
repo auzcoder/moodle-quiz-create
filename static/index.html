@@ -87,7 +87,9 @@
             <div class="flex justify-center gap-6 mb-10">
                 <!-- Active Moodle Card -->
                 <div class="relative group cursor-pointer">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200"></div>
+                    <div
+                        class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                    </div>
                     <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
                         <i class="fas fa-graduation-cap text-blue-400 text-xl"></i>
                         <span class="font-bold text-slate-100">Moodle</span>
@@ -96,16 +98,22 @@
 
                 <!-- Inactive Hemis Card -->
                 <div class="relative group cursor-not-allowed grayscale opacity-60 hover:opacity-75 transition-opacity">
-                    <div class="px-6 py-3 bg-slate-800/50 rounded-xl flex items-center space-x-3 border border-slate-700/50">
+                    <div
+                        class="px-6 py-3 bg-slate-800/50 rounded-xl flex items-center space-x-3 border border-slate-700/50">
                         <i class="fas fa-university text-slate-400 text-xl"></i>
                         <span class="font-medium text-slate-400">Hemis</span>
-                        <span class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez kunda...</span>
+                        <span
+                            class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez
+                            kunda...</span>
                     </div>
                 </div>
 
                 <!-- Donate Button -->
-                <div onclick="openDonateModal()" class="relative group cursor-pointer hover:scale-105 transition-transform">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200"></div>
+                <div onclick="openDonateModal()"
+                    class="relative group cursor-pointer hover:scale-105 transition-transform">
+                    <div
+                        class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                    </div>
                     <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
                         <i class="fas fa-heart text-pink-500 text-xl animate-pulse"></i>
                         <span class="font-bold text-slate-100">Homiylik</span>
@@ -113,8 +121,11 @@
                 </div>
 
                 <!-- Template Button -->
-                <div onclick="openExampleModal()" class="relative group cursor-pointer hover:scale-105 transition-transform">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200"></div>
+                <div onclick="openExampleModal()"
+                    class="relative group cursor-pointer hover:scale-105 transition-transform">
+                    <div
+                        class="absolute -inset-0.5 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                    </div>
                     <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
                         <i class="fas fa-file-word text-teal-400 text-xl"></i>
                         <span class="font-bold text-slate-100">Namuna</span>
@@ -124,7 +135,7 @@
 
             <header class="text-center mb-12">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                    <span class="gradient-text">Moodle Test Konvertori</span>
+                    <span class="gradient-text">Moodle test konvertori</span>
                 </h1>
                 <p class="text-slate-400 text-lg">Moodle tizimi uchun .doc va .docx fayllarni test formatiga (.txt)
                     o'tkazish.</p>
@@ -143,8 +154,7 @@
                             </div>
                             <h3 class="text-xl font-semibold text-slate-200 mb-2">Faylni shu yerga tashlang</h3>
                             <p class="text-slate-500 text-sm">.doc va .docx fayllarni qo'llab-quvvatlaydi</p>
-                            <button
-                                class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700">
+                            <button class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700">
                                 yoki tanlash uchun bosing
                             </button>
                         </div>
@@ -162,7 +172,7 @@
                                 <i class="fas fa-bolt"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-semibold text-slate-200">Juda Tez</div>
+                                <div class="text-sm font-semibold text-slate-200">Juda tez</div>
                                 <div class="text-xs text-slate-500">Bir zumda qayta ishlash</div>
                             </div>
                         </div>
@@ -173,7 +183,7 @@
                                 <i class="fas fa-magic"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-semibold text-slate-200">Aqlli Konvertatsiya</div>
+                                <div class="text-sm font-semibold text-slate-200">Aqlli konvertatsiya</div>
                                 <div class="text-xs text-slate-500">Matn yaxlitligini saqlaydi</div>
                             </div>
                         </div>
@@ -191,8 +201,7 @@
                                 <i class="fas fa-spinner fa-spin"></i>
                             </div>
                             <div>
-                                <h4 id="fileName" class="text-lg font-medium text-slate-200 truncate max-w-[200px]">
-                                    document.docx</h4>
+                                <h4 id="fileName" class="text-lg font-medium text-slate-200 truncate max-w-[200px]">document.docx</h4>
                                 <p id="statusText" class="text-sm text-blue-400">Qayta ishlanmoqda...</p>
                             </div>
                         </div>
@@ -202,7 +211,7 @@
                             <a id="downloadBtn" href="#"
                                 class="hidden btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2 shadow-lg shadow-blue-500/30">
                                 <i class="fas fa-download"></i>
-                                <span>Natijani Yuklab Olish</span>
+                                <span>Natijani yuklab olish</span>
                             </a>
                         </div>
                     </div>
@@ -218,10 +227,11 @@
 
 
         </div>
-        
+
         <!-- Stats Footer -->
         <div class="mt-8 mb-6 text-center">
-            <p class="text-slate-400 text-sm bg-slate-800/50 inline-block px-4 py-2 rounded-full border border-slate-700/50 backdrop-blur-sm">
+            <p
+                class="text-slate-400 text-sm bg-slate-800/50 inline-block px-4 py-2 rounded-full border border-slate-700/50 backdrop-blur-sm">
                 <i class="fas fa-file-circle-check text-blue-400 mr-2"></i>
                 Jami tayyorlangan fayllar: <span id="statsCount" class="font-bold text-white">...</span>
             </p>
@@ -231,13 +241,15 @@
     <!-- Donate Modal -->
     <div id="donateModal" class="fixed inset-0 z-50 hidden">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeDonateModal()"></div>
-        
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeDonateModal()">
+        </div>
+
         <!-- Modal Content -->
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
             <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl overflow-hidden p-8">
                 <!-- Close Button -->
-                <button onclick="closeDonateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                <button onclick="closeDonateModal()"
+                    class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>
 
@@ -245,38 +257,64 @@
                     <div class="w-16 h-16 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-heart text-3xl text-pink-500"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Loyihani Qo'llab-quvvatlash</h3>
+                    <h3 class="text-2xl font-bold text-white mb-2">Loyihani qo'llab-quvvatlash</h3>
                     <p class="text-slate-400 text-sm">Sizning yordamingiz bizga yangi imkoniyatlar yaratishda kuch bag'ishlaydi.</p>
                 </div>
 
                 <!-- Credit Card UI -->
-                <div class="relative w-full h-56 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 shadow-xl mb-6 overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-                    <!-- Glass effect -->
-                    <div class="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
-                    <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-white/20 rounded-full blur-2xl"></div>
-                    
+                <!-- Credit Card UI (Humo Style) -->
+                <div
+                    class="relative w-full h-56 bg-gradient-to-r from-sky-800 to-blue-900 rounded-2xl p-6 shadow-xl mb-6 overflow-hidden group hover:scale-[1.02] transition-transform duration-300 border border-sky-600/30">
+                    <!-- Decorative patterns -->
+                    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl">
+                    </div>
+                    <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl">
+                    </div>
+                    <div
+                        class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10">
+                    </div>
+
                     <div class="relative h-full flex flex-col justify-between z-10">
                         <div class="flex justify-between items-start">
-                             <div class="text-white/80 text-sm font-semibold tracking-widest">HUMO</div>
-                             <i class="fas fa-wifi text-white/60 rotate-90"></i>
+                            <div class="text-white font-bold text-lg tracking-widest italic flex items-center gap-2">
+                                <span class="text-orange-400">HUMO</span>
+                            </div>
+                            <i class="fas fa-wifi text-white/60 rotate-90"></i>
                         </div>
-                        
+
+                        <div class="flex items-center gap-4 mt-2">
+                            <div
+                                class="w-12 h-10 bg-amber-200 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-500 shadow-sm border border-yellow-600/30 flex items-center justify-center">
+                                <div class="w-8 h-6 border border-black/10 rounded-[2px] grid grid-cols-2 gap-[1px]">
+                                    <div class="border-r border-b border-black/10"></div>
+                                    <div class="border-b border-black/10"></div>
+                                    <div class="border-r border-black/10"></div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="text-center my-4">
-                            <div class="text-2xl md:text-3xl font-mono text-white tracking-wider drop-shadow-md">9860 0101 2365 1621</div>
+                            <!-- Adjusted font size: text-lg for mobile, text-2xl/3xl for larger screens. Removed tracking-widest -->
+                            <div
+                                class="text-base sm:text-lg md:text-3xl font-mono text-white tracking-normal drop-shadow-md whitespace-nowrap">
+                                9860 0101 2365 1621</div>
                         </div>
-                        
+
                         <div class="flex justify-between items-end">
                             <div>
-                                <div class="text-xs text-white/60 uppercase tracking-widest mb-1">Hisob raqam egasi</div>
-                                <div class="text-white font-medium tracking-wide">ABDULHAFIZ DAVLATOV</div>
+                                <div class="text-[10px] text-white/60 uppercase tracking-widest mb-1">Hisob raqam egasi</div>
+                                <div class="text-white font-medium tracking-wide text-sm md:text-base">ABDULHAFIZ
+                                    DAVLATOV</div>
                             </div>
-                            <i class="fab fa-cc-visa text-3xl text-white/80 opacity-0"></i> <!-- Spacer/Placeholder -->
+                            <!-- Replaced generic CC icon with text or empty since we have HUMO logo at top -->
                         </div>
                     </div>
                 </div>
 
                 <div class="text-center">
-                     <p class="text-slate-500 text-xs italic">"Loyihani rivojlantirishga qo'shgan hissangiz uchun minnatdormiz!"</p>
+                    <p class="text-slate-500 text-xs italic">"Loyihani rivojlantirishga qo'shgan hissangiz uchun
+                        minnatdormiz!"</p>
                 </div>
             </div>
         </div>
@@ -285,31 +323,35 @@
     <!-- Example Modal -->
     <div id="exampleModal" class="fixed inset-0 z-50 hidden">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity" onclick="closeExampleModal()"></div>
-        
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity" onclick="closeExampleModal()">
+        </div>
+
         <!-- Modal Content -->
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4 max-h-screen overflow-y-auto">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4 max-h-screen overflow-y-auto">
             <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl p-6 md:p-8">
                 <!-- Close Button -->
-                <button onclick="closeExampleModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-10 h-10 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600">
+                <button onclick="closeExampleModal()"
+                    class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-10 h-10 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
 
                 <div class="flex flex-col md:flex-row gap-8">
                     <!-- Text Side -->
                     <div class="md:w-1/3 flex flex-col justify-center">
-                         <div class="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
+                        <div class="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
                             <i class="fas fa-file-contract text-3xl text-teal-400"></i>
                         </div>
-                        <h3 class="text-3xl font-bold text-white mb-4">To'g'ri Format</h3>
+                        <h3 class="text-3xl font-bold text-white mb-4">To'g'ri format</h3>
                         <p class="text-slate-400 text-lg mb-8 leading-relaxed">
-                            Moodle tizimiga yuklash uchun testlaringiz o'ng tomondagi namunadagi kabi bo'lishi lozim. 
+                            Moodle tizimiga yuklash uchun testlaringiz o'ng tomondagi namunadagi kabi bo'lishi lozim.
                             Jadvallar va rasmlar to'g'ri joylashishiga e'tibor bering.
                         </p>
-                        
-                        <a href="/static/example.docx" download class="group w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl font-bold text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 transition-all flex items-center justify-center">
+
+                        <a href="/static/example.docx" download
+                            class="group w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl font-bold text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 transition-all flex items-center justify-center">
                             <i class="fas fa-download mr-3 group-hover:scale-110 transition-transform"></i>
-                            Shablonni Yuklab Olish (Docx)
+                            Shablonni yuklab olish (Docx)
                         </a>
                     </div>
 
@@ -460,7 +502,7 @@
                 spread: 70,
                 origin: { y: 0.6 }
             });
-            
+
             // Update stats after successful conversion
             updateStats();
         }
@@ -475,7 +517,7 @@
             progressBar.classList.replace('to-indigo-500', 'to-red-600');
             progressBar.style.width = '100%';
         }
-        
+
         async function updateStats() {
             try {
                 const response = await fetch('/stats');
@@ -485,8 +527,8 @@
                 console.error("Stats error", e);
             }
         }
-        
-        
+
+
         // Initial load
         updateStats();
 
@@ -520,7 +562,7 @@
         }
 
         function closeExampleModal() {
-             const modal = document.getElementById('exampleModal');
+            const modal = document.getElementById('exampleModal');
             modal.classList.add('hidden');
         }
     </script>
