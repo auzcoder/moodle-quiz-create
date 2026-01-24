@@ -507,44 +507,51 @@
                     } finally {
                         loading.value = false;
                     }
+                };
+
+                onMounted(() => {
+                    fetchMe();
+                    fetchTransactions();
+                    fetchTariffs();
                 });
 
-        const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
 
-        const formatDate = (dateStr) => {
-            if (!dateStr) return 'Cheksiz';
-            return new Date(dateStr).toLocaleDateString('uz-UZ');
-        };
+                const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
 
-        const usagePercent = computed(() => {
-            if (!user.value.daily_limit) return 0;
-            return Math.min(100, (user.value.used_today / user.value.daily_limit) * 100);
-        });
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return 'Cheksiz';
+                    return new Date(dateStr).toLocaleDateString('uz-UZ');
+                };
 
-        const formatPhone = (phone) => {
-            if (!phone) return '';
-            const cleaned = phone.toString().replace(/\D/g, '');
-            let match;
-            if (cleaned.length === 12) {
-                match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
-            } else if (cleaned.length === 9) {
-                match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
-            } else if (cleaned.length === 7) { // Support short format if enters just local
-                return phone;
-            }
-            if (match) return `+${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
-            return '+' + phone;
-        };
+                const usagePercent = computed(() => {
+                    if (!user.value.daily_limit) return 0;
+                    return Math.min(100, (user.value.used_today / user.value.daily_limit) * 100);
+                });
 
-        const formatPrice = (price) => {
-            return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
-        };
+                const formatPhone = (phone) => {
+                    if (!phone) return '';
+                    const cleaned = phone.toString().replace(/\D/g, '');
+                    let match;
+                    if (cleaned.length === 12) {
+                        match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
+                    } else if (cleaned.length === 9) {
+                        match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
+                    } else if (cleaned.length === 7) { // Support short format if enters just local
+                        return phone;
+                    }
+                    if (match) return `+${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
+                    return '+' + phone;
+                };
 
-        return {
-            user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice,
-            tariffs, activeModal, selectedTariff, receiptFile, isSubmitting, paymentTxId,
-            selectTariff, showModal, submitPayment, copyCard, buyWithBalance
-        };
+                const formatPrice = (price) => {
+                    return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
+                };
+
+                return {
+                    user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice,
+                    tariffs, activeModal, selectedTariff, receiptFile, isSubmitting, paymentTxId,
+                    selectTariff, showModal, submitPayment, copyCard, buyWithBalance
+                };
             }
         }).mount('#app');
     </script>

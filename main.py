@@ -193,6 +193,7 @@ def init_db():
         safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_id INTEGER REFERENCES tariffs(id)")
         safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_expires_at TIMESTAMP")
         safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0")
+        safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_tariff_change_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         
         safe_alter("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 30")
         safe_alter("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS price INTEGER DEFAULT 0")
@@ -1100,9 +1101,21 @@ async def get_me(authorization: Optional[str] = Header(None)):
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         cur.execute("""
+            SELECT u.last_tariff_change_at 
+            FROM users u WHERE id = %s
+        """, (user.get('id'),))
+        last_change_row = cur.fetchone()
+        last_change = last_change_row['last_tariff_change_at'] if last_change_row else None
+
+        # Effective Start Date: Max(StartOfMonth, LastTariffChange)
+        start_date = start_of_month
+        if last_change and last_change > start_of_month:
+            start_date = last_change
+
+        cur.execute("""
             SELECT COUNT(*) as count FROM jobs 
             WHERE user_id = %s AND created_at >= %s
-        """, (user.get('id'), start_of_month))
+        """, (user.get('id'), start_date))
         
         row = cur.fetchone()
         used_month = row['count'] if row else 0
@@ -1167,16 +1180,36 @@ async def upload_file_endpoint(
         is_free_upload = False
         
         # Check Tariff Validity
-        if expires_at and datetime.datetime.now() <= expires_at:
-            # Check Monthly Limit
-            now = datetime.datetime.now()
-            start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        # Check Monthly Limit
+        now = datetime.datetime.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Check Effective Usage (Reset if tariff changed)
+        cur.execute("SELECT last_tariff_change_at FROM users WHERE id = %s", (user_id,))
+        last_change_row = cur.fetchone()
+        last_change = last_change_row[0] if last_change_row else None
+        
+        effective_start = start_of_month
+        if last_change and last_change > start_of_month:
+            effective_start = last_change
             
-            cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s", (user_id, start_of_month))
-            usage_count = cur.fetchone()[0]
-            
-            if usage_count < daily_limit:
-                is_free_upload = True
+        cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s", (user_id, effective_start))
+        effective_usage = cur.fetchone()[0]
+
+        # Check Expiry
+        # If exp date exists and is in past -> Expired
+        if expires_at and expires_at < now:
+             # Expired: Fallback to Free/Pay-per-file if implemented, or just block
+             # For now, if expired, usage limit logic might not matter if we treat it as no tariff.
+             pass 
+             
+        # Check Limit
+        if daily_limit > 0 and effective_usage >= daily_limit:
+             pass # Limit reached, so is_free_upload remains False
+        
+        # If tariff is active and not expired and limit not reached, it's a free upload
+        if expires_at and now <= expires_at and (daily_limit == 0 or effective_usage < daily_limit):
+            is_free_upload = True
         
         if not is_free_upload:
             # Check Balance
@@ -1375,7 +1408,7 @@ async def decide_payment(
                     
                     cur.execute("""
                         UPDATE users 
-                        SET balance = %s, tariff_id = %s, tariff_expires_at = %s 
+                        SET balance = %s, tariff_id = %s, tariff_expires_at = %s, last_tariff_change_at = NOW()
                         WHERE id = %s
                     """, (new_balance, tariff['id'], expires_at, user_id))
                     
@@ -1421,7 +1454,7 @@ async def buy_tariff(id: int, current_user: dict = Depends(get_current_active_us
         # 1. Deduct Balance & Update Tariff
         cur.execute("""
             UPDATE users 
-            SET balance = %s, tariff_id = %s, tariff_expires_at = %s 
+            SET balance = %s, tariff_id = %s, tariff_expires_at = %s, last_tariff_change_at = NOW()
             WHERE id = %s
         """, (new_balance, id, expires_at, current_user['id']))
         
