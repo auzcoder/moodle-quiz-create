@@ -172,6 +172,22 @@ def init_db():
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
 
+# Initialize DB on startup
+init_db()
+
+# --- App Setup ---
+app = FastAPI(title="Lux Doc Converter")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # ... (Rest of app setup)
 
 # --- Models ---
