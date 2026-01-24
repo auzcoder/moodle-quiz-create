@@ -81,7 +81,7 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] flex flex-col">
+<body class="min-h-screen bg-[url('')] flex flex-col">
 
     <div id="app" class="flex-grow flex flex-col">
         <!-- User Profile Header -->
@@ -459,10 +459,7 @@
                                 class="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 flex gap-3 text-sm text-amber-200">
                                 <i class="fas fa-exclamation-triangle text-lg shrink-0 mt-0.5"></i>
                                 <div>
-                                    To'lov izohiga (kommentariyaga) ushbu ID ni yozing:
-                                    <div class="font-bold font-mono text-white mt-1 text-lg">ID: {{ paymentTxId }}</div>
-                                    <div class="text-[10px] opacity-70 mt-1">To'lovdan so'ng chek rasmini yuborish
-                                        majburiy.</div>
+                                    <b>Diqqat!</b> To'lovdan so'ng chek rasmini yuborish majburiy.
                                 </div>
                             </div>
 
@@ -592,9 +589,12 @@
                     activeModal.value = name;
                     selectedTariff.value = null; // Reset selection
                     receiptFile.value = null;
+                    if (name === 'pricing') {
+                        paymentTxId.value = 'TX-' + Math.floor(100000 + Math.random() * 900000);
+                    }
                 };
 
-
+                const selectTariff = (t) => selectedTariff.value = t;
 
                 const copyCard = () => {
                     navigator.clipboard.writeText("9860010123651621");
@@ -731,7 +731,7 @@
                     user, me, tariffs, stats, isDragOver, fileInput, activeModal, job, progress,
                     logout, showModal, triggerFileInput, handleDrop, handleFiles,
                     statusIcon, statusIconClass, statusTextClass, formatPrice, limitReached,
-                    selectedTariff, receiptFile, isSubmitting, selectTariff, copyCard, handleReceiptSelect, submitPayment
+                    selectedTariff, receiptFile, isSubmitting, paymentTxId, selectTariff, copyCard, handleReceiptSelect, submitPayment
                 };
             }
         }).mount('#app');

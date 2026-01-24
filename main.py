@@ -5,6 +5,7 @@ import shutil
 import datetime
 import logging
 import tempfile
+import base64
 from typing import Optional
 
 # Postgres & Env
@@ -12,7 +13,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Header
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Header, Depends
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import Response
@@ -569,7 +571,45 @@ async def login(user: UserLogin):
     finally:
         conn.close()
 
-# --- Helpers ---
+# --- Auth Dependencies ---
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+        
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cur.fetchone()
+        cur.close()
+        if user is None:
+            raise credentials_exception
+        return user
+    finally:
+        conn.close()
+
+async def get_current_active_user(current_user: dict = Depends(get_current_user)):
+    # if not current_user.get("is_active"): # Add active check if needed
+    #      raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+async def get_current_admin_user(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != 1:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return current_user
+
 def update_job_status(job_id: str, status: str, message: str = ""):
     conn = get_db_connection()
     try:
@@ -1204,6 +1244,113 @@ async def download_file(job_id: str):
         raise HTTPException(status_code=500, detail="Natija fayli topilmadi")
         
     return FileResponse(output_path, media_type='text/plain', filename=f"{os.path.splitext(job['filename'])[0]}.txt")
+
+# --- Payment Endpoints ---
+
+class PaymentRequest(BaseModel):
+    transaction_id: str
+    image: str # Base64 string
+
+@app.post("/api/pay")
+async def create_payment_request(
+    payload: PaymentRequest,
+    current_user: dict = Depends(get_current_active_user)
+):
+    try:
+        # Decode Base64
+        if "," in payload.image:
+            header, encoded = payload.image.split(",", 1)
+        else:
+            encoded = payload.image
+            
+        file_data = base64.b64decode(encoded)
+        filename = f"receipt_{uuid.uuid4()}.png" 
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        
+        with open(file_path, "wb") as f:
+            f.write(file_data)
+            
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO payment_requests (user_id, receipt_img, transaction_id, status)
+            VALUES (%s, %s, %s, 'pending')
+            RETURNING id
+        """, (current_user["id"], filename, payload.transaction_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "To'lov cheki yuborildi. Admin tasdiqlashini kuting."}
+        
+    except Exception as e:
+        logger.error(f"Payment upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+
+@app.get("/api/admin/payments")
+async def get_payment_requests(current_user: dict = Depends(get_current_admin_user)):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT p.*, u.full_name, u.email 
+            FROM payment_requests p
+            JOIN users u ON p.user_id = u.id
+            ORDER BY p.created_at DESC
+        """)
+        payments = cur.fetchall()
+        cur.close()
+        return payments
+    except Exception as e:
+        logger.error(f"Error fetching payments: {e}")
+        return []
+    finally:
+        conn.close()
+
+class PaymentDecision(BaseModel):
+    status: str 
+    amount: int = 0
+    note: Optional[str] = None
+    
+@app.post("/api/admin/payments/{id}/decide")
+async def decide_payment(
+    id: int, 
+    decision: PaymentDecision,
+    current_user: dict = Depends(get_current_admin_user)
+):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, status FROM payment_requests WHERE id = %s", (id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="To'lov topilmadi")
+        
+        user_id, current_status = row
+        if current_status != 'pending':
+            raise HTTPException(status_code=400, detail="Bu to'lov allaqachon ko'rib chiqilgan")
+
+        cur.execute("""
+            UPDATE payment_requests 
+            SET status = %s, admin_note = %s
+            WHERE id = %s
+        """, (decision.status, decision.note, id))
+        
+        if decision.status == 'approved' and decision.amount > 0:
+            cur.execute("UPDATE users SET balance = balance + %s WHERE id = %s", (decision.amount, user_id))
+            cur.execute("""
+                INSERT INTO transactions (user_id, amount, type, description)
+                VALUES (%s, %s, 'credit', 'Payment Approved via Receipt')
+            """, (user_id, decision.amount))
+            
+        conn.commit()
+        cur.close()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Payment decision failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     import uvicorn

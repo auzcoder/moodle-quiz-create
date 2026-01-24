@@ -269,10 +269,9 @@
                             <!-- User ID Info -->
                             <div
                                 class="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 flex gap-3 text-sm text-amber-200">
-                                <i class="fas fa-info-circle text-lg shrink-0 mt-0.5"></i>
+                                <i class="fas fa-exclamation-triangle text-lg shrink-0 mt-0.5"></i>
                                 <div>
-                                    To'lov izohiga (kommentariyaga) ID raqamingizni yozishni unutmang:
-                                    <div class="font-bold font-mono text-white mt-1 text-lg">ID: {{ user.id }}</div>
+                                    <b>Diqqat!</b> To'lovdan so'ng chek rasmini yuborish majburiy.
                                 </div>
                             </div>
 
@@ -381,7 +380,11 @@
                     return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
                 };
 
-                return { user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice };
+                return {
+                    user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice,
+                    tariffs, activeModal, selectedTariff, receiptFile, isSubmitting, paymentTxId,
+                    selectTariff, showModal, submitPayment, copyCard
+                };
             }
         }).mount('#app');
     </script>
