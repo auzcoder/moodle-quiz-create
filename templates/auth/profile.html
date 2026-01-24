@@ -250,7 +250,6 @@
                             <div class="text-sm text-indigo-300 uppercase tracking-wider mb-1">Tanlangan Tarif</div>
                             <div class="text-2xl font-bold text-white mb-1">{{ selectedTariff.name }}</div>
                             <div class="text-xl text-indigo-400 font-mono">{{ formatPrice(selectedTariff.price) }}</div>
-                            <div class="text-xl text-indigo-400 font-mono">{{ formatPrice(selectedTariff.price) }}</div>
                         </div>
 
                         <!-- Pay with Balance Option -->
@@ -469,65 +468,83 @@
                     }
                 };
 
-                onMounted(async () => {
+                const fetchMe = async () => {
                     const token = localStorage.getItem('access_token');
-                    if (!token) window.location.href = '/login';
+                    if (!token) {
+                        window.location.href = '/login';
+                        return;
+                    }
                     try {
                         const res = await fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (res.ok) user.value = await res.json();
+                        if (res.ok) {
+                            const data = await res.json();
+                            user.value = data; // Update user fully
+                            localStorage.setItem('user', JSON.stringify(data));
+                        }
+                    } catch (e) {
+                        console.error("Error fetching user data:", e);
+                    }
+                };
 
-                        // Fetch Transactions
+                const fetchTransactions = async () => {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) return;
+                    try {
                         const resTx = await fetch('/api/transactions', { headers: { 'Authorization': `Bearer ${token}` } });
                         if (resTx.ok) transactions.value = await resTx.json();
-
-                        // Fetch Tariffs for modal
-                        const resTariffs = await fetch('/api/admin/tariffs'); // Assuming public or needs auth, standard user can view tariffs usually? 
-                        // Actually, dashboard fetches '/api/admin/tariffs' but main.py might protect it or allow if user. 
-                        // Let's check main.py or just try. If failed, we need a public endpoint or use authenticated.
-                        if (resTariffs.ok) tariffs.value = await resTariffs.json();
-
                     } catch (e) {
+                        console.error("Error fetching transactions:", e);
+                    }
+                };
+
+                const fetchTariffs = async () => {
+                    // Assuming public or needs auth, standard user can view tariffs usually?
+                    // Actually, dashboard fetches '/api/admin/tariffs' but main.py might protect it or allow if user.
+                    // Let's check main.py or just try. If failed, we need a public endpoint or use authenticated.
+                    try {
+                        const resTariffs = await fetch('/api/admin/tariffs');
+                        if (resTariffs.ok) tariffs.value = await resTariffs.json();
                     } finally {
                         loading.value = false;
                     }
                 });
 
-                const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+        const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
 
-                const formatDate = (dateStr) => {
-                    if (!dateStr) return 'Cheksiz';
-                    return new Date(dateStr).toLocaleDateString('uz-UZ');
-                };
+        const formatDate = (dateStr) => {
+            if (!dateStr) return 'Cheksiz';
+            return new Date(dateStr).toLocaleDateString('uz-UZ');
+        };
 
-                const usagePercent = computed(() => {
-                    if (!user.value.daily_limit) return 0;
-                    return Math.min(100, (user.value.used_today / user.value.daily_limit) * 100);
-                });
+        const usagePercent = computed(() => {
+            if (!user.value.daily_limit) return 0;
+            return Math.min(100, (user.value.used_today / user.value.daily_limit) * 100);
+        });
 
-                const formatPhone = (phone) => {
-                    if (!phone) return '';
-                    const cleaned = phone.toString().replace(/\D/g, '');
-                    let match;
-                    if (cleaned.length === 12) {
-                        match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
-                    } else if (cleaned.length === 9) {
-                        match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
-                    } else if (cleaned.length === 7) { // Support short format if enters just local
-                        return phone;
-                    }
-                    if (match) return `+${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
-                    return '+' + phone;
-                };
+        const formatPhone = (phone) => {
+            if (!phone) return '';
+            const cleaned = phone.toString().replace(/\D/g, '');
+            let match;
+            if (cleaned.length === 12) {
+                match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
+            } else if (cleaned.length === 9) {
+                match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
+            } else if (cleaned.length === 7) { // Support short format if enters just local
+                return phone;
+            }
+            if (match) return `+${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
+            return '+' + phone;
+        };
 
-                const formatPrice = (price) => {
-                    return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
-                };
+        const formatPrice = (price) => {
+            return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
+        };
 
-                return {
-                    user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice,
-                    tariffs, activeModal, selectedTariff, receiptFile, isSubmitting, paymentTxId,
-                    selectTariff, showModal, submitPayment, copyCard, buyWithBalance
-                };
+        return {
+            user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice,
+            tariffs, activeModal, selectedTariff, receiptFile, isSubmitting, paymentTxId,
+            selectTariff, showModal, submitPayment, copyCard, buyWithBalance
+        };
             }
         }).mount('#app');
     </script>
