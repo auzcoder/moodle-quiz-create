@@ -134,26 +134,20 @@
                             </div>
                         </div>
 
-                        <!-- Limit Checker (EXPANDED) -->
+                        <!-- Limit Checker -->
                         <div class="relative group cursor-pointer" @click="showModal('pricing')">
                             <div
-                                class="px-10 py-4 bg-slate-900 rounded-xl flex items-center space-x-4 border border-slate-700/50 min-w-[200px] transform transition-all group-hover:scale-105 shadow-xl">
-                                <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
-                                    <i class="fas fa-chart-pie text-indigo-400 text-2xl"></i>
-                                </div>
-                                <div class="text-left flex-grow">
-                                    <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Oylik Limit</div>
+                                class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                            </div>
+                            <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                                <i class="fas fa-chart-pie text-indigo-400 text-xl"></i>
+                                <div>
                                     <div
-                                        class="text-xl font-bold text-white flex items-center justify-between w-full gap-4">
-                                        <span>{{ me.used_today || 0 }} / {{ me.daily_limit || 0 }}</span>
-                                        <span v-if="limitReached"
-                                            class="text-xs bg-red-500 text-white px-2 py-0.5 rounded animate-pulse shadow-lg shadow-red-500/50">To'ldi</span>
-                                    </div>
-                                    <!-- Progress Bar -->
-                                    <div class="w-full bg-slate-700/50 h-1.5 mt-2 rounded-full overflow-hidden">
-                                        <div class="bg-indigo-500 h-full rounded-full transition-all duration-1000"
-                                            :style="{ width: Math.min(100, ((me.used_today || 0) / (me.daily_limit || 1)) * 100) + '%' }">
-                                        </div>
+                                        class="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-0.5">
+                                        Limit</div>
+                                    <div class="text-sm font-bold text-slate-100 whitespace-nowrap">
+                                        {{ me.used_today || 0 }} / {{ me.daily_limit || 0 }}
+                                        <i v-if="limitReached" class="fas fa-lock text-red-500 ml-1 text-xs"></i>
                                     </div>
                                 </div>
                             </div>
@@ -615,7 +609,7 @@
                 return {
                     user, me, tariffs, stats, isDragOver, fileInput, activeModal, job, progress,
                     logout, showModal, triggerFileInput, handleDrop, handleFiles,
-                    statusIcon, statusIconClass, statusTextClass, formatPrice
+                    statusIcon, statusIconClass, statusTextClass, formatPrice, limitReached
                 };
             }
         }).mount('#app');
