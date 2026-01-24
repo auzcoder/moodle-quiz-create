@@ -13,7 +13,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Header, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Header, Depends, Form
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -800,16 +800,17 @@ def convert_to_gift(input_path: str, output_path: str):
                  continue
 
             original_text = str(text_node)
-            new_text = original_text
-            new_text = new_text.replace("ù", "")
+            new_text = original_text.replace("ù", "")
             if "<" in new_text: new_text = new_text.replace("<", "&lt;")
             if ">" in new_text: new_text = new_text.replace(">", "&gt;")
             
-            # GIFT Escaping
-            if "{" in new_text: new_text = new_text.replace("{", "\\{")
-            if "}" in new_text: new_text = new_text.replace("}", "\\}")
-            if "=" in new_text: new_text = new_text.replace("=", "\\=")
-            if "~" in new_text: new_text = new_text.replace("~", "\\~")
+            # Note: We delay GIFT/Hemis specific escaping to the formatter level ideally, 
+            # but current logic does it here. For Hemis, {}~= might be fine, but GIFT needs escaping.
+            # For now, let's keep basic cleaning here, but move format-specific escaping if we can.
+            # Actually, the user's current code does GIFT escaping IN PLACE. 
+            # We should probably run escaping only if format is GIFT, or unescape for Hemis.
+            # To keep it simple, I will keep the cleaning but remove the explicit GIFT escaping from here
+            # and move it to the format_gift function.
             
             if new_text != original_text:
                 text_node.replace_with(new_text)
@@ -845,8 +846,8 @@ def convert_to_gift(input_path: str, output_path: str):
                 except Exception as e:
                     logger.warning(f"Could not encode image: {e}")
 
-        # 3. Extract Q&A from Tables
-        output_lines = []
+        # 3. Extract Questions
+        questions = []
         tables = soup.find_all("table")
         
         for table in tables:
@@ -870,20 +871,19 @@ def convert_to_gift(input_path: str, output_path: str):
                 if "savol" in q_lower or "question" in q_lower or "to'g'ri javob" in q_lower:
                     continue
                     
-                block = []
-                block.append(f"::{question_text}{{")
-                block.append(f"={correct_answer}")
+                distractors = []
                 for i in range(3, len(cells)):
                     alt_text = get_cell_text(cells[i])
                     if alt_text:
-                        block.append(f"~{alt_text}")
-                block.append("}")
-                output_lines.append("\n".join(block))
-                output_lines.append("")
+                        distractors.append(alt_text)
+                
+                questions.append({
+                    "question": question_text,
+                    "correct": correct_answer,
+                    "distractors": distractors
+                })
 
-        # Write final output to the real output path
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(output_lines))
+        return questions
 
     except Exception as e:
         logger.error(f"Conversion process failed: {e}")
@@ -896,13 +896,70 @@ def convert_to_gift(input_path: str, output_path: str):
         except Exception as ignored:
             logger.warning(f"Failed to cleanup temp dir: {ignored}")
 
-async def process_conversion(job_id: str, input_path: str, output_path: str, is_legacy: bool):
+def format_gift(questions):
+    output_lines = []
+    for q in questions:
+        # Escape for GIFT
+        def escape_gift(text):
+            t = text.replace("{", "\\{").replace("}", "\\}").replace("=", "\\=").replace("~", "\\~")
+            return t
+            
+        block = []
+        block.append(f"::{escape_gift(q['question'])}{{")
+        block.append(f"={escape_gift(q['correct'])}")
+        for d in q['distractors']:
+            block.append(f"~{escape_gift(d)}")
+        block.append("}")
+        output_lines.append("\n".join(block))
+        output_lines.append("")
+    return "\n".join(output_lines)
+
+def format_hemis(questions):
+    output_lines = []
+    for q in questions:
+        # Hemis format:
+        # Question
+        # ====
+        # #Correct
+        # ====
+        # Wrong
+        # ====
+        # Wrong
+        # ++++
+        
+        block = []
+        block.append(q['question'])
+        block.append("====")
+        block.append(f"#{q['correct']}")
+        block.append("====")
+        for i, d in enumerate(q['distractors']):
+            block.append(d)
+            if i < len(q['distractors']) - 1:
+                block.append("====")
+            else:
+                pass # Last one followed by ++++
+                
+        block.append("++++")
+        output_lines.append("\n".join(block))
+    return "\n".join(output_lines)
+
+async def process_conversion(job_id: str, input_path: str, output_path: str, is_legacy: bool, output_format: str = 'gift'):
     try:
         update_job_status(job_id, "processing", "Konvertatsiya boshlandi...")
         
-        # Always use the custom logic for both doc and docx
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, convert_to_gift, input_path, output_path)
+        # Parse questions
+        questions = await loop.run_in_executor(None, convert_to_gift, input_path, output_path) # convert_to_gift now returns questions list
+        
+        # Format
+        if output_format == 'hemis':
+            content = format_hemis(questions)
+        else:
+            content = format_gift(questions)
+            
+        # Write Output
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(content)
             
         update_job_status(job_id, "completed", "Konvertatsiya muvaffaqiyatli yakunlandi")
     except Exception as e:
@@ -1186,6 +1243,7 @@ from fastapi import Header
 @app.post("/upload")
 async def upload_file_endpoint(
     file: UploadFile = File(...), 
+    format: str = Form("gift"),
     authorization: Optional[str] = Header(None),
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
@@ -1288,7 +1346,7 @@ async def upload_file_endpoint(
                   (job_id, file.filename, "queued", datetime.datetime.now(), user_id, file_cost if not is_free_upload else 0))
         conn.commit()
     
-        background_tasks.add_task(process_conversion, job_id, input_path, output_path, False)
+        background_tasks.add_task(process_conversion, job_id, input_path, output_path, False, format)
         return {"job_id": job_id, "status": "queued"}
         
     except HTTPException as he:
@@ -1298,7 +1356,7 @@ async def upload_file_endpoint(
         conn.close()
     
     is_legacy = ext == ".doc"
-    background_tasks.add_task(process_conversion, job_id, input_path, output_path, is_legacy)
+    background_tasks.add_task(process_conversion, job_id, input_path, output_path, is_legacy, format)
     
     return {"job_id": job_id, "message": "Fayl yuklandi va konvertatsiya boshlandi"}
 
