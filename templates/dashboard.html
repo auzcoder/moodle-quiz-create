@@ -675,7 +675,8 @@
                                 icon: 'success',
                                 title: 'Muvaffaqiyatli!',
                                 text: data.message,
-                                confirmButtonColor: '#3b82f6'
+                                showConfirmButton: false,
+                                timer: 1500
                             });
                             activeModal.value = null;
                         } else {
@@ -714,7 +715,8 @@
                                 icon: 'success',
                                 title: 'Tabriklaymiz!',
                                 text: data.message,
-                                confirmButtonColor: '#3b82f6'
+                                timer: 1500,
+                                showConfirmButton: false
                             });
                             activeModal.value = null;
                             // Update local stats
