@@ -836,21 +836,16 @@ def convert_to_gift(input_path: str, output_path: str, output_format: str = 'gif
                         # Encode Base64
                         encoded_string = base64.b64encode(raw_data).decode("utf-8").replace("\n", "").replace("\r", "")
                         
-                        # Only escape for GIFT format
-                        if output_format == 'gift':
-                            encoded_string = encoded_string.replace("=", "\\=")
-                        
                         mime_type = "image/png"
                         if image_full_path.lower().endswith((".jpg", ".jpeg")):
                             mime_type = "image/jpeg"
                         elif image_full_path.lower().endswith(".gif"):
                              mime_type = "image/gif"
                         
-                        if output_format == 'gift':
-                            code_string = f'<img src\\="data:{mime_type};base64,{encoded_string}">'
-                        else:
-                            # Standard HTML for Hemis/Other
-                            code_string = f'<img src="data:{mime_type};base64,{encoded_string}">'
+                        # Generate clean HTML tag
+                        # format_gift will automatically escape '=' to '\=' later if needed
+                        # format_hemis will leave it as is
+                        code_string = f'<img src="data:{mime_type};base64,{encoded_string}">'
                             
                         img.replace_with(code_string)
                 except Exception as e:
