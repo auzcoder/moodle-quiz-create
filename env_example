@@ -6,7 +6,7 @@ DB_PORT=5432
 
 # Email Settings (Gmail)
 MAIL_USERNAME=auz.offical@gmail.com
-MAIL_PASSWORD=mptp vhny jjup blzg
+MAIL_PASSWORD=aaaa aaa aaa aaa
 MAIL_FROM=no_replay@gmail.com
 MAIL_SERVER=smtp.gmail.com
 MAIL_PORT=587

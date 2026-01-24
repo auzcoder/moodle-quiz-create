@@ -1,911 +1,1103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moodle Test Konvertori</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #f8fafc;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
         }
 
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .drop-zone {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%233B82F640' stroke-width='2' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
             transition: all 0.3s ease;
-            border: 2px dashed rgba(148, 163, 184, 0.2);
         }
 
         .drop-zone:hover,
         .drop-zone.drag-over {
-            border-color: #38bdf8;
-            background: rgba(56, 189, 248, 0.1);
-        }
-
-        .gradient-text {
-            background: linear-gradient(to right, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%2360A5FA' stroke-width='3' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: scale(1.01);
         }
 
         .btn-primary {
-            background: linear-gradient(to right, #38bdf8, #6366f1);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+            opacity: 0.9;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
         }
 
-        /* Custom scrollbar */
+        @keyframes blob {
+            0% {
+                transform: translate(0px, 0px) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1);
+            }
+        }
+
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+
+        /* Scrollbar custom */
         ::-webkit-scrollbar {
             width: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: #1e293b;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #334155;
+            background: #475569;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+            background: #64748b;
         }
     </style>
 </head>
 
-<!-- Auth Modal Overlay (Initially Visible if not logged in) -->
-<div id="authOverlay"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 transition-opacity duration-300">
-    <div
-        class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 animate-pulse">
-    </div>
+<body class="min-h-screen bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
 
-    <!-- auth container -->
-    <div class="relative w-full max-w-md p-6">
-        <div class="glass-panel p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
-            <!-- Decorative Header -->
-            <div class="text-center mb-8">
-                <h1
-                    class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
-                    Moodle Converter</h1>
-                <p class="text-slate-400 text-sm">Kirish uchun hisobingizga kiring</p>
-            </div>
 
-            <!-- Login Form -->
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
-                    <div class="relative">
-                        <input type="email" id="loginEmail"
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="email@domain.com" required>
-                        <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Parol</label>
-                    <div class="relative">
-                        <input type="password" id="loginPassword"
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="••••••••" required>
-                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500"></i>
-                    </div>
-                </div>
-
-                <button type="submit"
-                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all">
-                    Kirish
-                </button>
-
-                <div class="text-center mt-4 text-sm text-slate-400">
-                    Hisobingiz yo'qmi? <a href="#" onclick="switchAuth('register')"
-                        class="text-blue-400 hover:text-blue-300 font-semibold">Ro'yxatdan o'tish</a>
-                </div>
-            </form>
-
-            <!-- Register Form (Hidden) -->
-            <form id="registerForm" class="space-y-3 hidden">
-                <div>
-                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Ism Familiya</label>
-                    <div class="relative">
-                        <input type="text" id="regName"
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="Ism Familiya" required>
-                        <i class="fas fa-user absolute left-3 top-3.5 text-slate-500"></i>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
-                    <div class="relative">
-                        <input type="email" id="regEmail"
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="email@domain.com" required>
-                        <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Telefon</label>
-                    <div class="relative">
-                        <input type="tel" id="regPhone"
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="+998 90 123 45 67" required>
-                        <i class="fas fa-phone absolute left-3 top-3.5 text-slate-500"></i>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Parol</label>
-                    <div class="relative">
-                        <input type="password" id="regPassword"
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="••••••••" required>
-                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500"></i>
-                    </div>
-                </div>
-
-                <button type="submit"
-                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all">
-                    Ro'yxatdan O'tish
-                </button>
-
-                <div class="text-center mt-4 text-sm text-slate-400">
-                    Hisobingiz bormi? <a href="#" onclick="switchAuth('login')"
-                        class="text-blue-400 hover:text-blue-300 font-semibold">Kirish</a>
-                </div>
-            </form>
-
-            <!-- Verify Form (Hidden) -->
-            <div id="verifyForm" class="hidden text-center">
-                <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
-                </div>
-                <h3 class="text-xl font-bold text-white mb-2">Emailni Tasdiqlash</h3>
-                <p class="text-slate-400 text-sm mb-6">Biz <span id="verifyEmailText"
-                        class="text-white font-semibold">email</span> manziliga kod yubordik.</p>
-
-                <div class="flex justify-center gap-2 mb-6">
-                    <input type="text" id="verifyCode" maxlength="4"
-                        class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-2xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
-                        placeholder="0000">
-                </div>
-
-                <button onclick="verifyCode()"
-                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg mb-4">
-                    Tasdiqlash
-                </button>
-
-                <button id="resendBtn" onclick="resendCode()"
-                    class="text-sm text-slate-400 hover:text-white transition-colors" disabled>
-                    Kodni qayta yuborish <span id="resendTimer">(120s)</span>
-                </button>
-
-                <div class="mt-4">
-                    <a href="#" onclick="switchAuth('register')"
-                        class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
-                </div>
-            </div>
-
-            <div id="authMessage" class="mt-4 text-center text-sm hidden font-medium"></div>
-        </div>
-    </div>
-</div>
-
-<!-- User Profile Button (Top Right - Added via Script) -->
-
-<div id="mainApp" class="hidden min-h-screen flex items-center justify-center p-4">
-    <div class="absolute top-4 right-4 z-50">
+    <!-- Auth Modal Overlay (Initially Visible if not logged in) -->
+    <div id="authOverlay"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 transition-opacity duration-300">
         <div
-            class="flex items-center gap-3 bg-slate-800/80 backdrop-blur rounded-full p-1 pl-4 border border-slate-700/50">
-            <span id="userFullName" class="text-sm font-semibold text-slate-200">User</span>
-            <button onclick="logout()"
-                class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all"
-                title="Chiqish">
-                <i class="fas fa-sign-out-alt text-xs"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="max-w-4xl w-full glass-panel rounded-3xl overflow-hidden relative">
-        <!-- Decorative blobs -->
-        <div
-            class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob">
-        </div>
-        <div
-            class="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000">
+            class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 animate-pulse">
         </div>
 
-        <div class="relative z-10 p-8 md:p-12">
-            <!-- Mode Switcher -->
-            <div class="flex justify-center gap-6 mb-10">
-                <!-- Active Moodle Card -->
-                <div class="relative group cursor-pointer">
-                    <div
-                        class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
-                    </div>
-                    <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
-                        <i class="fas fa-graduation-cap text-blue-400 text-xl"></i>
-                        <span class="font-bold text-slate-100">Moodle</span>
-                    </div>
+        <!-- auth container -->
+        <div class="relative w-full max-w-md p-6">
+            <div class="glass-panel p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
+                <!-- Decorative Header -->
+                <div class="text-center mb-8">
+                    <h1
+                        class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
+                        Moodle Converter</h1>
+                    <p class="text-slate-400 text-sm">Kirish uchun hisobingizga kiring</p>
                 </div>
 
-                <!-- Inactive Hemis Card -->
-                <div class="relative group cursor-not-allowed grayscale opacity-60 hover:opacity-75 transition-opacity">
-                    <div
-                        class="px-6 py-3 bg-slate-800/50 rounded-xl flex items-center space-x-3 border border-slate-700/50">
-                        <i class="fas fa-university text-slate-400 text-xl"></i>
-                        <span class="font-medium text-slate-400">Hemis</span>
-                        <span
-                            class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez
-                            kunda...</span>
-                    </div>
-                </div>
-
-                <!-- Donate Button -->
-                <div onclick="openDonateModal()"
-                    class="relative group cursor-pointer hover:scale-105 transition-transform">
-                    <div
-                        class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
-                    </div>
-                    <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
-                        <i class="fas fa-heart text-pink-500 text-xl animate-pulse"></i>
-                        <span class="font-bold text-slate-100">Homiylik</span>
-                    </div>
-                </div>
-
-                <!-- Template Button -->
-                <div onclick="openExampleModal()"
-                    class="relative group cursor-pointer hover:scale-105 transition-transform">
-                    <div
-                        class="absolute -inset-0.5 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
-                    </div>
-                    <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
-                        <i class="fas fa-file-word text-teal-400 text-xl"></i>
-                        <span class="font-bold text-slate-100">Namuna</span>
-                    </div>
-                </div>
-            </div>
-
-            <header class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                    <span class="gradient-text">Moodle test konvertori</span>
-                </h1>
-                <p class="text-slate-400 text-lg">Moodle tizimi uchun .doc va .docx fayllarni test formatiga (.txt)
-                    o'tkazish.</p>
-            </header>
-
-            <div class="grid md:grid-cols-5 gap-8">
-                <!-- Upload Section -->
-                <div class="md:col-span-3">
-                    <div id="dropZone"
-                        class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group">
-                        <input type="file" id="fileInput" class="hidden" accept=".doc,.docx">
-                        <div class="text-center p-6 transition-transform group-hover:scale-105">
-                            <div
-                                class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-blue-500/20 transition-all">
-                                <i class="fas fa-cloud-upload-alt text-3xl text-blue-400"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-slate-200 mb-2">Faylni shu yerga tashlang</h3>
-                            <p class="text-slate-500 text-sm">.doc va .docx fayllarni qo'llab-quvvatlaydi</p>
-                            <button
-                                class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700">
-                                yoki tanlash uchun bosing
-                            </button>
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
+                        <div class="relative">
+                            <input type="email" id="loginEmail"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="email@domain.com" required>
+                            <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
                         </div>
                     </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Parol</label>
+                        <div class="relative">
+                            <input type="password" id="loginPassword"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••••••" required>
+                            <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                        <div class="text-right mt-1">
+                            <a href="#" onclick="switchAuth('forgot')"
+                                class="text-xs text-blue-400 hover:text-blue-300">Parolni unutdingizmi?</a>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all">
+                        Kirish
+                    </button>
+
+                    <div class="text-center mt-4 text-sm text-slate-400">
+                        Hisobingiz yo'qmi? <a href="#" onclick="switchAuth('register')"
+                            class="text-blue-400 hover:text-blue-300 font-semibold">Ro'yxatdan o'tish</a>
+                    </div>
+                </form>
+
+                <!-- Register Form (Hidden) -->
+                <form id="registerForm" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Ism Familiya</label>
+                        <div class="relative">
+                            <input type="text" id="regName"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="Ism Familiya" required>
+                            <i class="fas fa-user absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
+                        <div class="relative">
+                            <input type="email" id="regEmail"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="email@domain.com" required>
+                            <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Telefon</label>
+                        <div class="relative flex items-center">
+                            <div class="absolute left-3 top-3.5 text-slate-400 font-semibold z-10 pointer-events-none">
+                                +998</div>
+                            <input type="tel" id="regPhone"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-14 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="90 123 45 67" maxlength="9" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Parol</label>
+                        <div class="relative">
+                            <input type="password" id="regPassword"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-8 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••" required>
+                            <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500 text-xs"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Tasdiqlash</label>
+                        <div class="relative">
+                            <input type="password" id="regPasswordConfirm"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-8 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••" required>
+                            <i class="fas fa-check absolute left-3 top-3.5 text-slate-500 text-xs"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all">
+                        Ro'yxatdan O'tish
+                    </button>
+
+                    <div class="text-center mt-4 text-sm text-slate-400">
+                        Hisobingiz bormi? <a href="#" onclick="switchAuth('login')"
+                            class="text-blue-400 hover:text-blue-300 font-semibold">Kirish</a>
+                    </div>
+                </form>
+
+                <!-- Verify Form (Hidden) -->
+                <div id="verifyForm" class="hidden text-center">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Emailni Tasdiqlash</h3>
+                    <p class="text-slate-400 text-sm mb-6">Biz <span id="verifyEmailText"
+                            class="text-white font-semibold">email</span> manziliga kod yubordik.</p>
+
+                    <div class="flex justify-center gap-2 mb-6">
+                        <input type="text" id="verifyCode" maxlength="4"
+                            class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-2xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="0000">
+                    </div>
+
+                    <button onclick="verifyCode()"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg mb-4">
+                        Tasdiqlash
+                    </button>
+
+                    <button id="resendBtn" onclick="resendCode()"
+                        class="text-sm text-slate-400 hover:text-white transition-colors" disabled>
+                        Kodni qayta yuborish <span id="resendTimer">(120s)</span>
+                    </button>
+
+                    <div class="mt-4">
+                        <a href="#" onclick="switchAuth('register')"
+                            class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
+                    </div>
                 </div>
 
-                <!-- Info/Status Section -->
-                <div class="md:col-span-2 flex flex-col justify-between space-y-4">
-                    <!-- Features -->
-                    <div class="space-y-4">
+                <!-- Forgot Password Form -->
+                <form id="forgotForm" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <h3 class="text-xl font-bold text-white">Parolni Tiklash</h3>
+                        <p class="text-slate-400 text-xs">Emailingizni kiriting va biz kod yuboramiz</p>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
+                        <div class="relative">
+                            <input type="email" id="forgotEmail"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="email@domain.com" required>
+                            <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all">
+                        Kodni Yuborish
+                    </button>
+                    <div class="text-center mt-4">
+                        <a href="#" onclick="switchAuth('login')"
+                            class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
+                    </div>
+                </form>
+
+                <!-- Reset Password Form -->
+                <form id="resetForm" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <h3 class="text-xl font-bold text-white">Yangi Parol</h3>
+                        <p class="text-slate-400 text-xs">Tasdiqlash kodi va yangi parolni kiriting</p>
+                    </div>
+
+                    <div class="flex justify-center mb-4">
+                        <input type="text" id="resetCode" maxlength="4"
+                            class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="CODE">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Yangi Parol</label>
+                        <div class="relative">
+                            <input type="password" id="resetPassword"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••••••" required>
+                            <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Tasdiqlash</label>
+                        <div class="relative">
+                            <input type="password" id="resetPasswordConfirm"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••••••" required>
+                            <i class="fas fa-check absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all">
+                        Parolni Yangilash
+                    </button>
+                </form>
+
+                <div id="authMessage" class="mt-4 text-center text-sm hidden font-medium"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Button (Top Right - Added via Script) -->
+
+    <div id="mainApp" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="absolute top-4 right-4 z-50">
+            <div
+                class="flex items-center gap-3 bg-slate-800/80 backdrop-blur rounded-full p-1 pl-4 border border-slate-700/50">
+                <span id="userFullName" class="text-sm font-semibold text-slate-200">User</span>
+                <button onclick="logout()"
+                    class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                    title="Chiqish">
+                    <i class="fas fa-sign-out-alt text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="max-w-4xl w-full glass-panel rounded-3xl overflow-hidden relative">
+            <!-- Decorative blobs -->
+            <div
+                class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000">
+            </div>
+
+            <div class="relative z-10 p-8 md:p-12">
+                <!-- Mode Switcher -->
+                <div class="flex justify-center gap-6 mb-10">
+                    <!-- Active Moodle Card -->
+                    <div class="relative group cursor-pointer">
                         <div
-                            class="flex items-center space-x-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
-                                <i class="fas fa-bolt"></i>
-                            </div>
-                            <div>
-                                <div class="text-sm font-semibold text-slate-200">Juda tez</div>
-                                <div class="text-xs text-slate-500">Bir zumda qayta ishlash</div>
+                            class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                        </div>
+                        <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                            <i class="fas fa-graduation-cap text-blue-400 text-xl"></i>
+                            <span class="font-bold text-slate-100">Moodle</span>
+                        </div>
+                    </div>
+
+                    <!-- Inactive Hemis Card -->
+                    <div
+                        class="relative group cursor-not-allowed grayscale opacity-60 hover:opacity-75 transition-opacity">
+                        <div
+                            class="px-6 py-3 bg-slate-800/50 rounded-xl flex items-center space-x-3 border border-slate-700/50">
+                            <i class="fas fa-university text-slate-400 text-xl"></i>
+                            <span class="font-medium text-slate-400">Hemis</span>
+                            <span
+                                class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez
+                                kunda...</span>
+                        </div>
+                    </div>
+
+                    <!-- Donate Button -->
+                    <div onclick="openDonateModal()"
+                        class="relative group cursor-pointer hover:scale-105 transition-transform">
+                        <div
+                            class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                        </div>
+                        <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                            <i class="fas fa-heart text-pink-500 text-xl animate-pulse"></i>
+                            <span class="font-bold text-slate-100">Homiylik</span>
+                        </div>
+                    </div>
+
+                    <!-- Template Button -->
+                    <div onclick="openExampleModal()"
+                        class="relative group cursor-pointer hover:scale-105 transition-transform">
+                        <div
+                            class="absolute -inset-0.5 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                        </div>
+                        <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                            <i class="fas fa-file-word text-teal-400 text-xl"></i>
+                            <span class="font-bold text-slate-100">Namuna</span>
+                        </div>
+                    </div>
+                </div>
+
+                <header class="text-center mb-12">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                        <span class="gradient-text">Moodle test konvertori</span>
+                    </h1>
+                    <p class="text-slate-400 text-lg">Moodle tizimi uchun .doc va .docx fayllarni test formatiga (.txt)
+                        o'tkazish.</p>
+                </header>
+
+                <div class="grid md:grid-cols-5 gap-8">
+                    <!-- Upload Section -->
+                    <div class="md:col-span-3">
+                        <div id="dropZone"
+                            class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group">
+                            <input type="file" id="fileInput" class="hidden" accept=".doc,.docx">
+                            <div class="text-center p-6 transition-transform group-hover:scale-105">
+                                <div
+                                    class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-blue-500/20 transition-all">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-blue-400"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-slate-200 mb-2">Faylni shu yerga tashlang</h3>
+                                <p class="text-slate-500 text-sm">.doc va .docx fayllarni qo'llab-quvvatlaydi</p>
+                                <button
+                                    class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors border border-slate-700">
+                                    yoki tanlash uchun bosing
+                                </button>
                             </div>
                         </div>
-                        <div
-                            class="flex items-center space-x-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                    </div>
+
+                    <!-- Info/Status Section -->
+                    <div class="md:col-span-2 flex flex-col justify-between space-y-4">
+                        <!-- Features -->
+                        <div class="space-y-4">
                             <div
-                                class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                                <i class="fas fa-magic"></i>
+                                class="flex items-center space-x-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-200">Juda tez</div>
+                                    <div class="text-xs text-slate-500">Bir zumda qayta ishlash</div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="text-sm font-semibold text-slate-200">Aqlli konvertatsiya</div>
-                                <div class="text-xs text-slate-500">Matn yaxlitligini saqlaydi</div>
+                            <div
+                                class="flex items-center space-x-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                    <i class="fas fa-magic"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-200">Aqlli konvertatsiya</div>
+                                    <div class="text-xs text-slate-500">Matn yaxlitligini saqlaydi</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Progress & Result Area -->
-            <div id="statusArea" class="mt-8 hidden">
-                <div class="glass-panel p-6 rounded-2xl border border-slate-700/50 bg-slate-800/30">
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div class="flex items-center space-x-4 w-full md:w-auto">
-                            <div id="statusIcon"
-                                class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
-                                <i class="fas fa-spinner fa-spin"></i>
+                <!-- Progress & Result Area -->
+                <div id="statusArea" class="mt-8 hidden">
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-700/50 bg-slate-800/30">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center space-x-4 w-full md:w-auto">
+                                <div id="statusIcon"
+                                    class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                                <div>
+                                    <h4 id="fileName" class="text-lg font-medium text-slate-200 truncate max-w-[200px]">
+                                        document.docx</h4>
+                                    <p id="statusText" class="text-sm text-blue-400">Qayta ishlanmoqda...</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 id="fileName" class="text-lg font-medium text-slate-200 truncate max-w-[200px]">
-                                    document.docx</h4>
-                                <p id="statusText" class="text-sm text-blue-400">Qayta ishlanmoqda...</p>
+
+                            <div id="actionArea" class="flex items-center space-x-3 w-full md:w-auto justify-end">
+                                <!-- Download Button (Hidden initially) -->
+                                <a id="downloadBtn" href="#"
+                                    class="hidden btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2 shadow-lg shadow-blue-500/30">
+                                    <i class="fas fa-download"></i>
+                                    <span>Natijani yuklab olish</span>
+                                </a>
                             </div>
                         </div>
 
-                        <div id="actionArea" class="flex items-center space-x-3 w-full md:w-auto justify-end">
-                            <!-- Download Button (Hidden initially) -->
-                            <a id="downloadBtn" href="#"
-                                class="hidden btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2 shadow-lg shadow-blue-500/30">
-                                <i class="fas fa-download"></i>
-                                <span>Natijani yuklab olish</span>
+                        <!-- Progress Bar -->
+                        <div class="mt-4 w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
+                            <div id="progressBar"
+                                class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full w-0 transition-all duration-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Stats Footer -->
+            <div class="mt-8 mb-6 text-center">
+                <p
+                    class="text-slate-400 text-sm bg-slate-800/50 inline-block px-4 py-2 rounded-full border border-slate-700/50 backdrop-blur-sm">
+                    <i class="fas fa-file-circle-check text-blue-400 mr-2"></i>
+                    Jami tayyorlangan fayllar: <span id="statsCount" class="font-bold text-white">...</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Donate Modal -->
+        <div id="donateModal" class="fixed inset-0 z-50 hidden">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity"
+                onclick="closeDonateModal()"></div>
+
+            <!-- Modal Content -->
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+                <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl overflow-hidden p-8">
+                    <!-- Close Button -->
+                    <button onclick="closeDonateModal()"
+                        class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+
+                    <div class="text-center mb-8">
+                        <div
+                            class="w-16 h-16 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-heart text-3xl text-pink-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Loyihani qo'llab-quvvatlash</h3>
+                        <p class="text-slate-400 text-sm">Sizning yordamingiz bizga yangi imkoniyatlar yaratishda kuch
+                            bag'ishlaydi.</p>
+                    </div>
+
+                    <!-- Credit Card UI -->
+                    <!-- Credit Card UI (Humo Style) -->
+                    <div
+                        class="relative w-full h-56 bg-gradient-to-r from-sky-800 to-blue-900 rounded-2xl p-6 shadow-xl mb-6 overflow-hidden group hover:scale-[1.02] transition-transform duration-300 border border-sky-600/30">
+                        <!-- Decorative patterns -->
+                        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl">
+                        </div>
+                        <div
+                            class="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl">
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10">
+                        </div>
+
+                        <div class="relative h-full flex flex-col justify-between z-10">
+                            <div class="flex justify-between items-start">
+                                <div
+                                    class="text-white font-bold text-lg tracking-widest italic flex items-center gap-2">
+                                    <span class="text-orange-400">HUMO</span>
+                                </div>
+                                <i class="fas fa-wifi text-white/60 rotate-90"></i>
+                            </div>
+
+                            <div class="flex items-center gap-4 mt-2">
+                                <div
+                                    class="w-12 h-10 bg-amber-200 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-500 shadow-sm border border-yellow-600/30 flex items-center justify-center">
+                                    <div
+                                        class="w-8 h-6 border border-black/10 rounded-[2px] grid grid-cols-2 gap-[1px]">
+                                        <div class="border-r border-b border-black/10"></div>
+                                        <div class="border-b border-black/10"></div>
+                                        <div class="border-r border-black/10"></div>
+                                        <div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center my-4">
+                                <!-- Adjusted font size: text-lg for mobile, text-2xl/3xl for larger screens. Removed tracking-widest -->
+                                <div
+                                    class="text-base sm:text-lg md:text-3xl font-mono text-white tracking-normal drop-shadow-md whitespace-nowrap">
+                                    9860 0101 2365 1621</div>
+                            </div>
+
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <div class="text-[10px] text-white/60 uppercase tracking-widest mb-1">Hisob raqam
+                                        egasi</div>
+                                    <div class="text-white font-medium tracking-wide text-sm md:text-base">ABDULHAFIZ
+                                        DAVLATOV</div>
+                                </div>
+                                <!-- Replaced generic CC icon with text or empty since we have HUMO logo at top -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <p class="text-slate-500 text-xs italic">"Loyihani rivojlantirishga qo'shgan hissangiz uchun
+                            minnatdormiz!"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Modal -->
+        <div id="exampleModal" class="fixed inset-0 z-50 hidden">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity"
+                onclick="closeExampleModal()"></div>
+
+            <!-- Modal Content -->
+            <div
+                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4 max-h-screen overflow-y-auto">
+                <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl p-6 md:p-8">
+                    <!-- Close Button -->
+                    <button onclick="closeExampleModal()"
+                        class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-10 h-10 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <!-- Text Side -->
+                        <div class="md:w-1/3 flex flex-col justify-center">
+                            <div class="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
+                                <i class="fas fa-file-contract text-3xl text-teal-400"></i>
+                            </div>
+                            <h3 class="text-3xl font-bold text-white mb-4">To'g'ri format</h3>
+                            <p class="text-slate-400 text-lg mb-8 leading-relaxed">
+                                Moodle tizimiga yuklash uchun testlaringiz o'ng tomondagi namunadagi kabi bo'lishi
+                                lozim.
+                                Jadvallar va rasmlar to'g'ri joylashishiga e'tibor bering.
+                            </p>
+
+                            <a href="/static/example.docx" download
+                                class="group w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl font-bold text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 transition-all flex items-center justify-center">
+                                <i class="fas fa-download mr-3 group-hover:scale-110 transition-transform"></i>
+                                Shablonni yuklab olish (Docx)
                             </a>
                         </div>
-                    </div>
 
-                    <!-- Progress Bar -->
-                    <div class="mt-4 w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
-                        <div id="progressBar"
-                            class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full w-0 transition-all duration-500">
+                        <!-- Image Side -->
+                        <div
+                            class="md:w-2/3 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-inner">
+                            <img src="/static/example.png" alt="Test namuna formati"
+                                class="w-full h-auto object-contain">
                         </div>
                     </div>
                 </div>
             </div>
-
-
         </div>
 
-        <!-- Stats Footer -->
-        <div class="mt-8 mb-6 text-center">
-            <p
-                class="text-slate-400 text-sm bg-slate-800/50 inline-block px-4 py-2 rounded-full border border-slate-700/50 backdrop-blur-sm">
-                <i class="fas fa-file-circle-check text-blue-400 mr-2"></i>
-                Jami tayyorlangan fayllar: <span id="statsCount" class="font-bold text-white">...</span>
-            </p>
-        </div>
-    </div>
+        <script>
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const statusArea = document.getElementById('statusArea');
+            const fileNameEl = document.getElementById('fileName');
+            const statusTextEl = document.getElementById('statusText');
+            const statusIconEl = document.getElementById('statusIcon');
+            const progressBar = document.getElementById('progressBar');
+            const downloadBtn = document.getElementById('downloadBtn');
 
-    <!-- Donate Modal -->
-    <div id="donateModal" class="fixed inset-0 z-50 hidden">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeDonateModal()">
-        </div>
-
-        <!-- Modal Content -->
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
-            <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl overflow-hidden p-8">
-                <!-- Close Button -->
-                <button onclick="closeDonateModal()"
-                    class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-heart text-3xl text-pink-500"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Loyihani qo'llab-quvvatlash</h3>
-                    <p class="text-slate-400 text-sm">Sizning yordamingiz bizga yangi imkoniyatlar yaratishda kuch
-                        bag'ishlaydi.</p>
-                </div>
-
-                <!-- Credit Card UI -->
-                <!-- Credit Card UI (Humo Style) -->
-                <div
-                    class="relative w-full h-56 bg-gradient-to-r from-sky-800 to-blue-900 rounded-2xl p-6 shadow-xl mb-6 overflow-hidden group hover:scale-[1.02] transition-transform duration-300 border border-sky-600/30">
-                    <!-- Decorative patterns -->
-                    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl">
-                    </div>
-                    <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl">
-                    </div>
-                    <div
-                        class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10">
-                    </div>
-
-                    <div class="relative h-full flex flex-col justify-between z-10">
-                        <div class="flex justify-between items-start">
-                            <div class="text-white font-bold text-lg tracking-widest italic flex items-center gap-2">
-                                <span class="text-orange-400">HUMO</span>
-                            </div>
-                            <i class="fas fa-wifi text-white/60 rotate-90"></i>
-                        </div>
-
-                        <div class="flex items-center gap-4 mt-2">
-                            <div
-                                class="w-12 h-10 bg-amber-200 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-500 shadow-sm border border-yellow-600/30 flex items-center justify-center">
-                                <div class="w-8 h-6 border border-black/10 rounded-[2px] grid grid-cols-2 gap-[1px]">
-                                    <div class="border-r border-b border-black/10"></div>
-                                    <div class="border-b border-black/10"></div>
-                                    <div class="border-r border-black/10"></div>
-                                    <div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="text-center my-4">
-                            <!-- Adjusted font size: text-lg for mobile, text-2xl/3xl for larger screens. Removed tracking-widest -->
-                            <div
-                                class="text-base sm:text-lg md:text-3xl font-mono text-white tracking-normal drop-shadow-md whitespace-nowrap">
-                                9860 0101 2365 1621</div>
-                        </div>
-
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <div class="text-[10px] text-white/60 uppercase tracking-widest mb-1">Hisob raqam egasi
-                                </div>
-                                <div class="text-white font-medium tracking-wide text-sm md:text-base">ABDULHAFIZ
-                                    DAVLATOV</div>
-                            </div>
-                            <!-- Replaced generic CC icon with text or empty since we have HUMO logo at top -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <p class="text-slate-500 text-xs italic">"Loyihani rivojlantirishga qo'shgan hissangiz uchun
-                        minnatdormiz!"</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Example Modal -->
-    <div id="exampleModal" class="fixed inset-0 z-50 hidden">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity" onclick="closeExampleModal()">
-        </div>
-
-        <!-- Modal Content -->
-        <div
-            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4 max-h-screen overflow-y-auto">
-            <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl p-6 md:p-8">
-                <!-- Close Button -->
-                <button onclick="closeExampleModal()"
-                    class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 w-10 h-10 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-
-                <div class="flex flex-col md:flex-row gap-8">
-                    <!-- Text Side -->
-                    <div class="md:w-1/3 flex flex-col justify-center">
-                        <div class="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
-                            <i class="fas fa-file-contract text-3xl text-teal-400"></i>
-                        </div>
-                        <h3 class="text-3xl font-bold text-white mb-4">To'g'ri format</h3>
-                        <p class="text-slate-400 text-lg mb-8 leading-relaxed">
-                            Moodle tizimiga yuklash uchun testlaringiz o'ng tomondagi namunadagi kabi bo'lishi lozim.
-                            Jadvallar va rasmlar to'g'ri joylashishiga e'tibor bering.
-                        </p>
-
-                        <a href="/static/example.docx" download
-                            class="group w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl font-bold text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 transition-all flex items-center justify-center">
-                            <i class="fas fa-download mr-3 group-hover:scale-110 transition-transform"></i>
-                            Shablonni yuklab olish (Docx)
-                        </a>
-                    </div>
-
-                    <!-- Image Side -->
-                    <div class="md:w-2/3 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-inner">
-                        <img src="/static/example.png" alt="Test namuna formati" class="w-full h-auto object-contain">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const statusArea = document.getElementById('statusArea');
-        const fileNameEl = document.getElementById('fileName');
-        const statusTextEl = document.getElementById('statusText');
-        const statusIconEl = document.getElementById('statusIcon');
-        const progressBar = document.getElementById('progressBar');
-        const downloadBtn = document.getElementById('downloadBtn');
-
-        // Drag and Drop Events
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            dropZone.classList.add('drag-over');
-        }
-
-        function unhighlight(e) {
-            dropZone.classList.remove('drag-over');
-        }
-
-        dropZone.addEventListener('drop', handleDrop, false);
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFiles, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles({ target: { files: files } });
-        }
-
-        function handleFiles(e) {
-            const files = e.target.files;
-            if (files.length > 0) {
-                uploadFile(files[0]);
-            }
-        }
-
-        async function uploadFile(file) {
-            // Reset UI
-            statusArea.classList.remove('hidden');
-            downloadBtn.classList.add('hidden');
-            progressBar.style.width = '10%';
-            fileNameEl.textContent = file.name;
-            statusTextEl.textContent = 'Yuklanmoqda...';
-            statusIconEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            statusIconEl.className = 'w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400';
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('Yuklashda xatolik');
-                }
-
-                const data = await response.json();
-                const jobId = data.job_id;
-
-                statusTextEl.textContent = 'Qayta ishlanmoqda...';
-                progressBar.style.width = '40%';
-
-                pollStatus(jobId);
-
-            } catch (error) {
-                console.error('Error:', error);
-                statusTextEl.textContent = 'Xatolik: ' + error.message;
-                statusTextEl.classList.replace('text-blue-400', 'text-red-400');
-                statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
-                statusIconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                progressBar.style.width = '100%';
-                progressBar.classList.replace('from-blue-500', 'from-red-500');
-                progressBar.classList.replace('to-indigo-500', 'to-red-600');
-            }
-        }
-
-        function pollStatus(jobId) {
-            const interval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/status/${jobId}`);
-                    const job = await response.json();
-
-                    if (job.status === 'completed') {
-                        clearInterval(interval);
-                        completeJob(job, jobId);
-                    } else if (job.status === 'error') {
-                        clearInterval(interval);
-                        failJob(job.message);
-                    } else {
-                        // Still processing, maybe animate progress bar vaguely
-                        const currentWidth = parseFloat(progressBar.style.width);
-                        if (currentWidth < 90) {
-                            progressBar.style.width = (currentWidth + 5) + '%';
-                        }
-                    }
-                } catch (e) {
-                    console.error("Polling error", e);
-                }
-            }, 1000);
-        }
-
-        function completeJob(job, jobId) {
-            progressBar.style.width = '100%';
-            statusTextEl.textContent = 'Konvertatsiya Yakunlandi!';
-            statusTextEl.classList.replace('text-blue-400', 'text-green-400');
-
-            statusIconEl.className = 'w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400';
-            statusIconEl.innerHTML = '<i class="fas fa-check"></i>';
-
-            downloadBtn.href = `/download/${jobId}`;
-            downloadBtn.classList.remove('hidden');
-
-            // Confetti
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
+            // Drag and Drop Events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
             });
 
-            // Update stats after successful conversion
-            updateStats();
-        }
-
-        function failJob(message) {
-            statusTextEl.textContent = 'Muvaffaqiyatsiz: ' + message;
-            statusTextEl.classList.replace('text-blue-400', 'text-red-400');
-            statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
-            statusIconEl.innerHTML = '<i class="fas fa-times"></i>';
-            progressBar.classList.replace('from-blue-500', 'from-red-500');
-            progressBar.classList.replace('to-indigo-500', 'to-red-600');
-            progressBar.classList.replace('to-indigo-500', 'to-red-600');
-            progressBar.style.width = '100%';
-        }
-
-        async function updateStats() {
-            try {
-                const response = await fetch('/stats');
-                const data = await response.json();
-                document.getElementById('statsCount').textContent = data.count;
-            } catch (e) {
-                console.error("Stats error", e);
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
             }
-        }
 
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
 
-        // Initial load
-        updateStats();
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
 
-        // --- Auth Logic ---
-        const authOverlay = document.getElementById('authOverlay');
-        const mainApp = document.getElementById('mainApp');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const verifyForm = document.getElementById('verifyForm');
-        const authMessage = document.getElementById('authMessage');
-        const resendBtn = document.getElementById('resendBtn');
-        const resendTimer = document.getElementById('resendTimer');
-
-        let pendingEmail = "";
-
-        // Check Token on Load
-        checkAuth();
-
-        function checkAuth() {
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                document.getElementById('userFullName').textContent = user.full_name || 'Foydalanuvchi';
-
-                authOverlay.classList.add('hidden');
-                mainApp.classList.remove('hidden');
-            } else {
-                authOverlay.classList.remove('hidden');
-                mainApp.classList.add('hidden');
+            function highlight(e) {
+                dropZone.classList.add('drag-over');
             }
-        }
 
-        function logout() {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('user');
-            checkAuth();
-            loginForm.reset();
-        }
-
-        function switchAuth(mode) {
-            authMessage.classList.add('hidden');
-            if (mode === 'login') {
-                loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
-                verifyForm.classList.add('hidden');
-            } else if (mode === 'register') {
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
-                verifyForm.classList.add('hidden');
-            } else if (mode === 'verify') {
-                loginForm.classList.add('hidden');
-                registerForm.classList.add('hidden');
-                verifyForm.classList.remove('hidden');
+            function unhighlight(e) {
+                dropZone.classList.remove('drag-over');
             }
-        }
 
-        function showMessage(msg, type = 'error') {
-            authMessage.textContent = msg;
-            authMessage.classList.remove('hidden', 'text-red-400', 'text-green-400');
-            authMessage.classList.add(type === 'error' ? 'text-red-400' : 'text-green-400');
-        }
+            dropZone.addEventListener('drop', handleDrop, false);
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFiles, false);
 
-        // Login
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles({ target: { files: files } });
+            }
 
-            try {
-                const res = await fetch('/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+            function handleFiles(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    uploadFile(files[0]);
+                }
+            }
 
-                const data = await res.json();
+            async function uploadFile(file) {
+                // Reset UI
+                statusArea.classList.remove('hidden');
+                downloadBtn.classList.add('hidden');
+                progressBar.style.width = '10%';
+                fileNameEl.textContent = file.name;
+                statusTextEl.textContent = 'Yuklanmoqda...';
+                statusIconEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                statusIconEl.className = 'w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400';
 
-                if (!res.ok) {
-                    if (data.detail && data.detail.includes("tasdiqlanmagan")) {
-                        pendingEmail = email;
-                        document.getElementById('verifyEmailText').textContent = email;
-                        switchAuth('verify');
-                        startCooldown();
-                        return;
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Yuklashda xatolik');
                     }
-                    throw new Error(data.detail || 'Kirishda xatolik');
-                }
 
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                    const data = await response.json();
+                    const jobId = data.job_id;
+
+                    statusTextEl.textContent = 'Qayta ishlanmoqda...';
+                    progressBar.style.width = '40%';
+
+                    pollStatus(jobId);
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    statusTextEl.textContent = 'Xatolik: ' + error.message;
+                    statusTextEl.classList.replace('text-blue-400', 'text-red-400');
+                    statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
+                    statusIconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                    progressBar.style.width = '100%';
+                    progressBar.classList.replace('from-blue-500', 'from-red-500');
+                    progressBar.classList.replace('to-indigo-500', 'to-red-600');
+                }
+            }
+
+            function pollStatus(jobId) {
+                const interval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/status/${jobId}`);
+                        const job = await response.json();
+
+                        if (job.status === 'completed') {
+                            clearInterval(interval);
+                            completeJob(job, jobId);
+                        } else if (job.status === 'error') {
+                            clearInterval(interval);
+                            failJob(job.message);
+                        } else {
+                            // Still processing, maybe animate progress bar vaguely
+                            const currentWidth = parseFloat(progressBar.style.width);
+                            if (currentWidth < 90) {
+                                progressBar.style.width = (currentWidth + 5) + '%';
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Polling error", e);
+                    }
+                }, 1000);
+            }
+
+            function completeJob(job, jobId) {
+                progressBar.style.width = '100%';
+                statusTextEl.textContent = 'Konvertatsiya Yakunlandi!';
+                statusTextEl.classList.replace('text-blue-400', 'text-green-400');
+
+                statusIconEl.className = 'w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400';
+                statusIconEl.innerHTML = '<i class="fas fa-check"></i>';
+
+                downloadBtn.href = `/download/${jobId}`;
+                downloadBtn.classList.remove('hidden');
+
+                // Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+
+                // Update stats after successful conversion
+                updateStats();
+            }
+
+            function failJob(message) {
+                statusTextEl.textContent = 'Muvaffaqiyatsiz: ' + message;
+                statusTextEl.classList.replace('text-blue-400', 'text-red-400');
+                statusIconEl.className = 'w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400';
+                statusIconEl.innerHTML = '<i class="fas fa-times"></i>';
+                progressBar.classList.replace('from-blue-500', 'from-red-500');
+                progressBar.classList.replace('to-indigo-500', 'to-red-600');
+                progressBar.classList.replace('to-indigo-500', 'to-red-600');
+                progressBar.style.width = '100%';
+            }
+
+            async function updateStats() {
+                try {
+                    const response = await fetch('/stats');
+                    const data = await response.json();
+                    document.getElementById('statsCount').textContent = data.count;
+                } catch (e) {
+                    console.error("Stats error", e);
+                }
+            }
+
+
+            // Initial load
+            updateStats();
+
+            // --- Auth Logic ---
+            const authOverlay = document.getElementById('authOverlay');
+            const mainApp = document.getElementById('mainApp');
+
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const verifyForm = document.getElementById('verifyForm');
+            const forgotForm = document.getElementById('forgotForm');
+            const resetForm = document.getElementById('resetForm');
+
+            const authMessage = document.getElementById('authMessage');
+            const resendBtn = document.getElementById('resendBtn');
+            const resendTimer = document.getElementById('resendTimer');
+
+            let pendingEmail = "";
+
+            // Check Token on Load
+            checkAuth();
+
+            function checkAuth() {
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    document.getElementById('userFullName').textContent = user.full_name || 'Foydalanuvchi';
+
+                    authOverlay.classList.add('hidden');
+                    mainApp.classList.remove('hidden');
+                } else {
+                    authOverlay.classList.remove('hidden');
+                    mainApp.classList.add('hidden');
+                }
+            }
+
+            function logout() {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
                 checkAuth();
-
-            } catch (err) {
-                showMessage(err.message, 'error');
+                loginForm.reset();
             }
-        });
 
-        // Register
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const full_name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            const phone = document.getElementById('regPhone').value;
-            const password = document.getElementById('regPassword').value;
+            function switchAuth(mode) {
+                authMessage.classList.add('hidden');
 
-            try {
-                const res = await fetch('/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ full_name, email, phone, password })
-                });
+                // Hide all first
+                loginForm.classList.add('hidden');
+                registerForm.classList.add('hidden');
+                verifyForm.classList.add('hidden');
+                forgotForm.classList.add('hidden');
+                resetForm.classList.add('hidden');
 
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.detail || 'Ro\'yxatdan o\'tishda xatolik');
-
-                pendingEmail = email;
-                document.getElementById('verifyEmailText').textContent = email;
-                showMessage(data.message, 'success');
-                setTimeout(() => switchAuth('verify'), 1500);
-                startCooldown();
-
-            } catch (err) {
-                showMessage(err.message, 'error');
-            }
-        });
-
-        // Verify Code
-        async function verifyCode() {
-            const code = document.getElementById('verifyCode').value;
-            try {
-                const res = await fetch('/auth/verify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: pendingEmail, code })
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail);
-
-                showMessage("Muvaffaqiyatli! Endi kirishingiz mumkin.", 'success');
-                setTimeout(() => {
-                    switchAuth('login');
-                    document.getElementById('loginEmail').value = pendingEmail;
-                }, 2000);
-
-            } catch (err) {
-                showMessage(err.message, 'error');
-            }
-        }
-
-        // Resend Code
-        let cooldownInterval;
-        function startCooldown() {
-            let timeLeft = 120; // 2 minutes
-            resendBtn.disabled = true;
-            resendBtn.classList.add('text-slate-600');
-
-            clearInterval(cooldownInterval);
-            cooldownInterval = setInterval(() => {
-                timeLeft--;
-                resendTimer.textContent = `(${timeLeft}s)`;
-                if (timeLeft <= 0) {
-                    clearInterval(cooldownInterval);
-                    resendBtn.disabled = false;
-                    resendBtn.classList.remove('text-slate-600');
-                    resendTimer.textContent = "";
+                if (mode === 'login') {
+                    loginForm.classList.remove('hidden');
+                } else if (mode === 'register') {
+                    registerForm.classList.remove('hidden');
+                } else if (mode === 'verify') {
+                    verifyForm.classList.remove('hidden');
+                } else if (mode === 'forgot') {
+                    forgotForm.classList.remove('hidden');
+                } else if (mode === 'reset') {
+                    resetForm.classList.remove('hidden');
                 }
-            }, 1000);
-        }
-
-        async function resendCode() {
-            try {
-                const res = await fetch('/auth/resend-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: pendingEmail })
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail);
-
-                showMessage("Yangi kod yuborildi!", 'success');
-                startCooldown();
-
-            } catch (err) {
-                showMessage(err.message, 'error');
             }
-        }
 
-        // Modal Functions
-        function openDonateModal() {
-            const modal = document.getElementById('donateModal');
-            modal.classList.remove('hidden');
-            // Animate entry
-            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
-                modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
+            function showMessage(msg, type = 'error') {
+                authMessage.textContent = msg;
+                authMessage.classList.remove('hidden', 'text-red-400', 'text-green-400');
+                authMessage.classList.add(type === 'error' ? 'text-red-400' : 'text-green-400');
+            }
 
-        function closeDonateModal() {
-            const modal = document.getElementById('donateModal');
-            modal.classList.add('hidden');
-        }
+            // Login
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
 
-        // Example Modal Functions
-        function openExampleModal() {
-            const modal = document.getElementById('exampleModal');
-            modal.classList.remove('hidden');
-            // Animate entry
-            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
-                modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
+                try {
+                    const res = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
 
-        function closeExampleModal() {
-            const modal = document.getElementById('exampleModal');
-            modal.classList.add('hidden');
-        }
-    </script>
-    </body>
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        if (data.detail && data.detail.includes("tasdiqlanmagan")) {
+                            pendingEmail = email;
+                            document.getElementById('verifyEmailText').textContent = email;
+                            switchAuth('verify');
+                            startCooldown();
+                            return;
+                        }
+                        throw new Error(data.detail || 'Kirishda xatolik');
+                    }
+
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    checkAuth();
+
+                } catch (err) {
+                    showMessage(err.message, 'error');
+                }
+            });
+
+            // Register
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const full_name = document.getElementById('regName').value;
+                const email = document.getElementById('regEmail').value;
+                const phone = document.getElementById('regPhone').value;
+                const password = document.getElementById('regPassword').value;
+                const confirm = document.getElementById('regPasswordConfirm').value;
+
+                if (password !== confirm) {
+                    showMessage("Parollar mos kelmadi", 'error');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ full_name, email, phone, password })
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) throw new Error(data.detail || 'Ro\'yxatdan o\'tishda xatolik');
+
+                    pendingEmail = email;
+                    document.getElementById('verifyEmailText').textContent = email;
+                    showMessage(data.message, 'success');
+                    setTimeout(() => switchAuth('verify'), 1500);
+                    startCooldown();
+
+                } catch (err) {
+                    showMessage(err.message, 'error');
+                }
+            });
+
+            // Verify Code
+            async function verifyCode() {
+                const code = document.getElementById('verifyCode').value;
+                try {
+                    const res = await fetch('/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: pendingEmail, code })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail);
+
+                    showMessage("Muvaffaqiyatli! Endi kirishingiz mumkin.", 'success');
+                    setTimeout(() => {
+                        switchAuth('login');
+                        document.getElementById('loginEmail').value = pendingEmail;
+                    }, 2000);
+
+                } catch (err) {
+                    showMessage(err.message, 'error');
+                }
+            }
+
+            // Forgot Password
+            forgotForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgotEmail').value;
+
+                try {
+                    const res = await fetch('/auth/forgot-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail);
+
+                    pendingEmail = email;
+                    showMessage(data.message, 'success');
+                    setTimeout(() => switchAuth('reset'), 1500);
+
+                } catch (err) {
+                    showMessage(err.message, 'error');
+                }
+            });
+
+            // Reset Password
+            resetForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const code = document.getElementById('resetCode').value;
+                const new_password = document.getElementById('resetPassword').value;
+                const confirm = document.getElementById('resetPasswordConfirm').value;
+
+                if (new_password !== confirm) {
+                    showMessage("Parollar mos kelmadi", 'error');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/auth/reset-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: pendingEmail, code, new_password })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail);
+
+                    showMessage(data.message, 'success');
+                    setTimeout(() => {
+                        switchAuth('login');
+                        document.getElementById('loginEmail').value = pendingEmail;
+                    }, 2000);
+
+                } catch (err) {
+                    showMessage(err.message, 'error');
+                }
+            });
+
+            // Resend Code
+            let cooldownInterval;
+            function startCooldown() {
+                let timeLeft = 120; // 2 minutes
+                resendBtn.disabled = true;
+                resendBtn.classList.add('text-slate-600');
+
+                clearInterval(cooldownInterval);
+                cooldownInterval = setInterval(() => {
+                    timeLeft--;
+                    resendTimer.textContent = `(${timeLeft}s)`;
+                    if (timeLeft <= 0) {
+                        clearInterval(cooldownInterval);
+                        resendBtn.disabled = false;
+                        resendBtn.classList.remove('text-slate-600');
+                        resendTimer.textContent = "";
+                    }
+                }, 1000);
+            }
+
+            async function resendCode() {
+                try {
+                    const res = await fetch('/auth/resend-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: pendingEmail })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail);
+
+                    showMessage("Yangi kod yuborildi!", 'success');
+                    startCooldown();
+
+                } catch (err) {
+                    showMessage(err.message, 'error');
+                }
+            }
+
+            // Modal Functions
+            function openDonateModal() {
+                const modal = document.getElementById('donateModal');
+                modal.classList.remove('hidden');
+                // Animate entry
+                modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+                    modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+
+            function closeDonateModal() {
+                const modal = document.getElementById('donateModal');
+                modal.classList.add('hidden');
+            }
+
+            // Example Modal Functions
+            function openExampleModal() {
+                const modal = document.getElementById('exampleModal');
+                modal.classList.remove('hidden');
+                // Animate entry
+                modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+                    modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+
+            function closeExampleModal() {
+                const modal = document.getElementById('exampleModal');
+                modal.classList.add('hidden');
+            }
+        </script>
+</body>
 
 </html>
