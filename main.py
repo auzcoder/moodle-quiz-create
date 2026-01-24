@@ -207,6 +207,18 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+
+        # Transactions Table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                amount INTEGER NOT NULL,
+                type TEXT NOT NULL,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
         # Seed Default Tariff
         cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
@@ -879,13 +891,12 @@ class TariffUpdate(BaseModel):
 # --- Admin API Endpoints ---
 @app.get("/api/admin/users")
 async def get_all_users():
-    # TODO: Add proper JWT Admin check here (using dependency)
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT id, full_name, email, phone, role, is_verified, tariff_id, created_at FROM users ORDER BY id ASC")
+        # Added balance
+        cur.execute("SELECT id, full_name, email, phone, role, is_verified, tariff_id, balance, created_at FROM users ORDER BY id ASC")
         users = cur.fetchall()
-        # Convert datetime to str
         for u in users:
             u['created_at'] = str(u['created_at'])
         return users
@@ -969,6 +980,43 @@ async def update_tariff(tariff_id: int, data: TariffUpdate):
     finally:
         conn.close()
 
+@app.get("/api/transactions")
+async def get_my_transactions(authorization: Optional[str] = Header(None)):
+    if not authorization: return JSONResponse({}, status_code=401)
+    conn = None
+    try:
+        _, token = authorization.split()
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM transactions WHERE user_id = %s ORDER BY created_at DESC LIMIT 50", (user_id,))
+        txs = cur.fetchall()
+        for t in txs:
+            t['created_at'] = str(t['created_at'])
+        return txs
+    finally:
+        if conn: conn.close()
+
+@app.get("/api/admin/transactions")
+async def get_all_transactions():
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT t.*, u.full_name, u.email 
+            FROM transactions t 
+            LEFT JOIN users u ON t.user_id = u.id 
+            ORDER BY t.created_at DESC LIMIT 100
+        """)
+        txs = cur.fetchall()
+        for t in txs:
+            t['created_at'] = str(t['created_at'])
+        return txs
+    finally:
+        conn.close()
+
 @app.get("/api/me")
 async def get_me(authorization: Optional[str] = Header(None)):
     if not authorization: return JSONResponse({}, status_code=401)
@@ -1005,11 +1053,12 @@ async def get_me(authorization: Optional[str] = Header(None)):
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         cur.execute("""
-            SELECT COUNT(*) FROM jobs 
+            SELECT COUNT(*) as count FROM jobs 
             WHERE user_id = %s AND created_at >= %s
         """, (user.get('id'), start_of_month))
         
-        used_month = cur.fetchone()[0]
+        row = cur.fetchone()
+        used_month = row['count'] if row else 0
         user['used_today'] = used_month # Monthly usage
         user['tariff_expires_at'] = str(user['tariff_expires_at']) if user['tariff_expires_at'] else None
         
@@ -1037,6 +1086,7 @@ async def upload_file_endpoint(
 ):
     if not authorization: raise HTTPException(status_code=401, detail="Unauthorized")
     
+    conn = None
     try:
         _, token = authorization.split()
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -1086,9 +1136,13 @@ async def upload_file_endpoint(
             if balance < file_cost:
                 raise HTTPException(status_code=403, detail=f"Mablag' yetarli emas! Fayl narxi: {file_cost} so'm. Hisobingizda: {balance} so'm")
             
-            # Deduct Balance
+            # Deduct Balance & Record Transaction
             new_balance = balance - file_cost
             cur.execute("UPDATE users SET balance = %s WHERE id = %s", (new_balance, user_id))
+            cur.execute("""
+                INSERT INTO transactions (user_id, amount, type, description, created_at)
+                VALUES (%s, %s, 'usage', %s, NOW())
+            """, (user_id, -file_cost, f"Fayl konvertatsiyasi: {file.filename}"))
             
         # Proceed with Upload
         job_id = str(uuid.uuid4())
@@ -1108,13 +1162,14 @@ async def upload_file_endpoint(
         cur.execute("INSERT INTO jobs (id, filename, status, created_at, user_id) VALUES (%s, %s, %s, %s, %s)", 
                   (job_id, file.filename, "queued", datetime.datetime.now(), user_id))
         conn.commit()
-
+    
+        background_tasks.add_task(process_conversion, job_id, input_path, output_path, False)
+        return {"job_id": job_id, "status": "queued"}
+        
     except HTTPException as he:
+        if conn: conn.rollback()
         raise he
     except Exception as e:
-        logger.error(f"Error creating job: {e}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
         conn.close()
     
     is_legacy = ext == ".doc"

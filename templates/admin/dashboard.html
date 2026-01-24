@@ -106,6 +106,11 @@
                 class="pb-2 px-4 font-medium transition-all">
                 Tariflar
             </button>
+            <button @click="activeTab = 'transactions'"
+                :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'transactions', 'text-slate-400 hover:text-white': activeTab !== 'transactions'}"
+                class="pb-2 px-4 font-medium transition-all">
+                Tarix (Transaktsiyalar)
+            </button>
         </div>
 
         <!-- USERS TAB -->
@@ -117,6 +122,7 @@
                             <th>Ism</th>
                             <th>Email</th>
                             <th>Telefon</th>
+                            <th>Balans</th>
                             <th>Role</th>
                             <th>Tarif</th>
                             <th>Status</th>
@@ -128,6 +134,7 @@
                             <td class="font-medium text-white">{{ user.full_name }}</td>
                             <td class="text-slate-400">{{ user.email }}</td>
                             <td class="text-slate-400">{{ formatPhone(user.phone) }}</td>
+                            <td class="text-amber-400 font-mono">{{ formatPrice(user.balance || 0) }}</td>
                             <td>
                                 <span v-if="user.role === 1"
                                     class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Admin</span>
@@ -347,7 +354,7 @@
                     return t ? t.name : '-';
                 };
 
-                const editUser = (user) => {
+                const openUserModal = (user) => { // Renamed from editUser to openUserModal
                     editingUser.value = { ...user };
                     showUserModal.value = true;
                 };
@@ -362,7 +369,7 @@
                         });
                         if (res.ok) {
                             showUserModal.value = false;
-                            loadData();
+                            fetchUsers(); // Changed from loadData()
                         }
                     } catch (e) { console.error(e); }
                 };

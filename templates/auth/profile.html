@@ -70,17 +70,37 @@
                     <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy
                         Ma'lumotlar</h3>
 
-                    <div>
-                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">To'liq Ism</div>
-                        <div class="text-slate-200 font-medium">{{ user.full_name }}</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Email</div>
-                        <div class="text-slate-200 font-medium">{{ user.email }}</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Telefon</div>
-                        <div class="text-slate-200 font-medium">{{ formatPhone(user.phone) }}</div>
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center space-x-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-400">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 uppercase">To'liq ism</div>
+                                <div class="text-white font-medium">{{ user.full_name }}</div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center space-x-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-400">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 uppercase">Email</div>
+                                <div class="text-white font-medium">{{ user.email }}</div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center space-x-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-400">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 uppercase">Telefon</div>
+                                <div class="text-white font-medium">{{ formatPhone(user.phone) }}</div>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Status</div>
@@ -94,6 +114,38 @@
                             v-else>
                             Foydalanuvchi
                         </span>
+                    </div>
+
+                    <!-- Transactions Table -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-green-500 pl-3">Oxirgi
+                            O'tkazmalar</h3>
+                        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-900/50 text-slate-400">
+                                    <tr>
+                                        <th class="px-4 py-3">Sana</th>
+                                        <th class="px-4 py-3">Summa</th>
+                                        <th class="px-4 py-3">Izoh</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700/50">
+                                    <tr v-for="t in transactions" :key="t.id">
+                                        <td class="px-4 py-3 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
+                                        <td class="px-4 py-3 font-mono font-bold"
+                                            :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
+                                            {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-300 text-xs truncate max-w-[150px]">{{
+                                            t.description }}</td>
+                                    </tr>
+                                    <tr v-if="transactions.length === 0">
+                                        <td colspan="3" class="px-4 py-6 text-center text-slate-500">Hozircha tarix yo'q
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -150,39 +202,34 @@
             setup() {
                 const user = ref({});
                 const loading = ref(true);
+                const transactions = ref([]);
 
                 onMounted(async () => {
                     const token = localStorage.getItem('access_token');
                     if (!token) window.location.href = '/login';
-
                     try {
                         const res = await fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } });
                         if (res.ok) user.value = await res.json();
+
+                        // Fetch Transactions
+                        const resTx = await fetch('/api/transactions', { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (resTx.ok) transactions.value = await resTx.json();
                     } catch (e) {
-                        console.error(e);
                     } finally {
                         loading.value = false;
                     }
                 });
 
-                const getInitials = (name) => {
-                    if (!name) return 'U';
-                    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                };
+                const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
 
                 const formatDate = (dateStr) => {
-                    if (!dateStr || dateStr === 'None') return 'Cheksiz';
-                    const date = new Date(dateStr);
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}.${month}.${year}`;
+                    if (!dateStr) return 'Cheksiz';
+                    return new Date(dateStr).toLocaleDateString('uz-UZ');
                 };
 
                 const usagePercent = computed(() => {
-                    const used = user.value.used_today || 0;
-                    const limit = user.value.daily_limit || 1;
-                    return Math.min((used / limit) * 100, 100);
+                    if (!user.value.daily_limit) return 0;
+                    return Math.min(100, (user.value.used_today / user.value.daily_limit) * 100);
                 });
 
                 const formatPhone = (phone) => {
@@ -204,7 +251,7 @@
                     return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
                 };
 
-                return { user, loading, getInitials, formatDate, usagePercent, formatPhone, formatPrice };
+                return { user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice };
             }
         }).mount('#app');
     </script>
