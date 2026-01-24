@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ro'yxatdan o'tish - Moodle Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+
+    <div id="app" class="w-full max-w-md p-6">
+        <div class="glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1
+                    class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
+                    Moodle Converter</h1>
+                <p class="text-slate-400 text-sm" v-if="step === 'register'">Yangi hisob yaratish</p>
+                <p class="text-slate-400 text-sm" v-else>Emailni tasdiqlash</p>
+            </div>
+
+            <!-- REGISTER FORM -->
+            <form v-if="step === 'register'" @submit.prevent="handleRegister" class="space-y-3">
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Ism Familiya</label>
+                    <div class="relative">
+                        <input v-model="form.full_name" type="text"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="Ism Familiya" required>
+                        <i class="fas fa-user absolute left-3 top-3.5 text-slate-500"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
+                    <div class="relative">
+                        <input v-model="form.email" type="email"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="email@domain.com" required>
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Telefon</label>
+                    <div class="relative flex items-center">
+                        <div class="absolute left-3 top-3.5 text-slate-400 font-semibold z-10 pointer-events-none">+998
+                        </div>
+                        <input v-model="contactPhone" type="tel"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-14 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="90 123 45 67" maxlength="9" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Parol</label>
+                    <div class="relative">
+                        <input v-model="form.password" type="password"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-8 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="••••" required>
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500 text-xs"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Tasdiqlash</label>
+                    <div class="relative">
+                        <input v-model="confirmPassword" type="password"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-8 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="••••" required>
+                        <i class="fas fa-check absolute left-3 top-3.5 text-slate-500 text-xs"></i>
+                    </div>
+                </div>
+
+                <button type="submit" :disabled="loading"
+                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
+                    <span v-if="!loading">Ro'yxatdan O'tish</span>
+                    <i v-else class="fas fa-spinner fa-spin"></i>
+                </button>
+
+                <div v-if="error"
+                    class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                    {{ error }}
+                </div>
+
+                <div class="text-center mt-4 text-sm text-slate-400">
+                    Hisobingiz bormi? <a href="/login"
+                        class="text-blue-400 hover:text-blue-300 font-semibold">Kirish</a>
+                </div>
+            </form>
+
+            <!-- VERIFY FORM -->
+            <div v-else class="text-center">
+                <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Emailni Tasdiqlash</h3>
+                <p class="text-slate-400 text-sm mb-6">Biz <span class="text-white font-semibold">{{ form.email
+                        }}</span> manziliga kod yubordik.</p>
+
+                <div class="flex justify-center gap-2 mb-6">
+                    <input v-model="verifyCode" maxlength="4"
+                        class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-2xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
+                        placeholder="0000">
+                </div>
+
+                <button @click="handleVerify" :disabled="loading"
+                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg mb-4 flex justify-center items-center">
+                    <span v-if="!loading">Tasdiqlash</span>
+                    <i v-else class="fas fa-spinner fa-spin"></i>
+                </button>
+
+                <button @click="resendCode" :disabled="cooldown > 0"
+                    class="text-sm text-slate-400 hover:text-white transition-colors"
+                    :class="{'opacity-50': cooldown > 0}">
+                    Kodni qayta yuborish <span v-if="cooldown > 0">({{ cooldown }}s)</span>
+                </button>
+
+                <div class="mt-4">
+                    <a href="#" @click.prevent="step = 'register'"
+                        class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
+                </div>
+
+                <div v-if="error"
+                    class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                    {{ error }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const step = ref('register'); // 'register' or 'verify'
+                const loading = ref(false);
+                const error = ref('');
+                const success = ref('');
+
+                const form = ref({
+                    full_name: '',
+                    email: '',
+                    phone: '',
+                    password: ''
+                });
+
+                const contactPhone = ref(''); // Raw input without prefix
+                const confirmPassword = ref('');
+                const verifyCode = ref('');
+
+                const cooldown = ref(0);
+                let timerInterval = null;
+
+                onMounted(() => {
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.get('mode') === 'verify') {
+                        const savedEmail = localStorage.getItem('pending_email');
+                        if (savedEmail) {
+                            form.value.email = savedEmail;
+                            step.value = 'verify';
+                            startCooldown();
+                        }
+                    }
+                });
+
+                const startCooldown = () => {
+                    cooldown.value = 120;
+                    if (timerInterval) clearInterval(timerInterval);
+                    timerInterval = setInterval(() => {
+                        cooldown.value--;
+                        if (cooldown.value <= 0) clearInterval(timerInterval);
+                    }, 1000);
+                };
+
+                const handleRegister = async () => {
+                    if (form.value.password !== confirmPassword.value) {
+                        error.value = "Parollar mos emas";
+                        return;
+                    }
+
+                    loading.value = true;
+                    error.value = '';
+
+                    // Prepare payload
+                    const payload = { ...form.value };
+                    // Ensure phone is just digits if needed, backend handles '998' prefix addition logic if missing, 
+                    // but frontend input is just 9 digits. We pass it as is, backend logic expects raw string.
+                    // Let's pass the 9 digits, backend adds prefix.
+                    payload.phone = contactPhone.value;
+
+                    try {
+                        const res = await fetch('/auth/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await res.json();
+
+                        if (!res.ok) throw new Error(data.detail || 'Xatolik');
+
+                        localStorage.setItem('pending_email', form.value.email);
+                        step.value = 'verify';
+                        startCooldown();
+
+                    } catch (err) {
+                        error.value = err.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const handleVerify = async () => {
+                    loading.value = true;
+                    error.value = '';
+
+                    try {
+                        const res = await fetch('/auth/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: form.value.email, code: verifyCode.value })
+                        });
+
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail || 'Xatolik');
+
+                        // Success -> Redirect to Login
+                        // Pre-fill email in login via localStorage logic if we implemented that, otherwise just redirect
+                        localStorage.removeItem('pending_email');
+                        window.location.href = '/login';
+
+                    } catch (err) {
+                        error.value = err.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const resendCode = async () => {
+                    if (cooldown.value > 0) return;
+                    loading.value = true;
+                    try {
+                        const res = await fetch('/auth/resend-code', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: form.value.email })
+                        });
+                        if (!res.ok) throw new Error('Failed');
+                        startCooldown();
+                    } catch (e) {
+                        error.value = "Qayta yuborishda xatolik";
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                return {
+                    step, loading, error, success, form, contactPhone, confirmPassword, verifyCode,
+                    handleRegister, handleVerify, resendCode, cooldown
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Moodle Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Table Styles */
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] flex flex-col">
+
+    <div id="app" class="p-6 max-w-7xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
+                <i class="fas fa-user-shield mr-2"></i> Admin Panel
+            </h1>
+            <div class="flex items-center gap-4">
+                <a href="/dashboard" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> Asosiy Sahifa
+                </a>
+                <div
+                    class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                    <span class="font-bold text-red-400">A</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="text-slate-400 text-sm mb-1">Jami Foydalanuvchilar</div>
+                <div class="text-3xl font-bold text-white">{{ users.length }}</div>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="text-slate-400 text-sm mb-1">Jami Tariflar</div>
+                <div class="text-3xl font-bold text-white">{{ tariffs.length }}</div>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="text-slate-400 text-sm mb-1">Bugungi Yuklamalar</div>
+                <div class="text-3xl font-bold text-white">...</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex space-x-4 mb-6 border-b border-slate-700/50 pb-2">
+            <button @click="activeTab = 'users'"
+                :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'users', 'text-slate-400 hover:text-white': activeTab !== 'users'}"
+                class="pb-2 px-4 font-medium transition-all">
+                Foydalanuvchilar
+            </button>
+            <button @click="activeTab = 'tariffs'"
+                :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'tariffs', 'text-slate-400 hover:text-white': activeTab !== 'tariffs'}"
+                class="pb-2 px-4 font-medium transition-all">
+                Tariflar
+            </button>
+        </div>
+
+        <!-- USERS TAB -->
+        <div v-if="activeTab === 'users'" class="glass-panel rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Ism</th>
+                            <th>Email</th>
+                            <th>Telefon</th>
+                            <th>Role</th>
+                            <th>Tarif</th>
+                            <th>Status</th>
+                            <th>Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="user in users" :key="user.id">
+                            <td class="font-medium text-white">{{ user.full_name }}</td>
+                            <td class="text-slate-400">{{ user.email }}</td>
+                            <td class="text-slate-400">{{ user.phone }}</td>
+                            <td>
+                                <span v-if="user.role === 1"
+                                    class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Admin</span>
+                                <span v-else
+                                    class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">User</span>
+                            </td>
+                            <td>
+                                <span class="text-white">{{ getTariffName(user.tariff_id) }}</span>
+                            </td>
+                            <td>
+                                <span v-if="user.is_verified" class="text-green-400"><i
+                                        class="fas fa-check-circle"></i></span>
+                                <span v-else class="text-slate-500"><i class="fas fa-clock"></i></span>
+                            </td>
+                            <td>
+                                <button @click="editUser(user)" class="text-blue-400 hover:text-white mx-1"
+                                    title="Tahrirlash">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TARIFFS TAB -->
+        <div v-if="activeTab === 'tariffs'">
+            <div class="flex justify-end mb-4">
+                <button @click="openTariffModal()"
+                    class="btn-primary px-4 py-2 rounded-lg text-white font-bold text-sm shadow-lg">
+                    <i class="fas fa-plus mr-2"></i> Yangi Tarif
+                </button>
+            </div>
+
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Nomi</th>
+                            <th>Limit (Kunlik)</th>
+                            <th>Holati</th>
+                            <th>Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="tariff in tariffs" :key="tariff.id">
+                            <td class="font-bold text-white">{{ tariff.name }}</td>
+                            <td class="text-slate-300">{{ tariff.daily_limit }} ta fayl</td>
+                            <td>
+                                <span v-if="tariff.is_active"
+                                    class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">Active</span>
+                                <span v-else
+                                    class="bg-slate-700 text-slate-400 px-2 py-1 rounded text-xs font-bold">Inactive</span>
+                            </td>
+                            <td>
+                                <button @click="openTariffModal(tariff)" class="text-blue-400 hover:text-white mx-1">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div v-if="showUserModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
+            @click.self="showUserModal = false">
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold text-white mb-4">Foydalanuvchini Tahrirlash</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Role</label>
+                        <select v-model="editingUser.role"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                            <option :value="1">Superadmin</option>
+                            <option :value="2">User</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Tarif</label>
+                        <select v-model="editingUser.tariff_id"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                            <option v-for="t in tariffs" :key="t.id" :value="t.id">{{ t.name }} ({{ t.daily_limit }})
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button @click="showUserModal = false"
+                        class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Bekor
+                        qilish</button>
+                    <button @click="saveUser"
+                        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold">Saqlash</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tariff Modal -->
+        <div v-if="showTariffModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
+            @click.self="showTariffModal = false">
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold text-white mb-4">{{ editingTariff.id ? 'Tarifni Tahrirlash' : 'Yangi Tarif'
+                    }}</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Nomi</label>
+                        <input v-model="editingTariff.name" type="text"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Kunlik Limit</label>
+                        <input v-model="editingTariff.daily_limit" type="number"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input v-model="editingTariff.is_active" type="checkbox" id="isActive"
+                            class="w-4 h-4 rounded bg-slate-900 border-slate-700">
+                        <label for="isActive" class="text-slate-300 text-sm">Aktiv</label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button @click="showTariffModal = false"
+                        class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Bekor
+                        qilish</button>
+                    <button @click="saveTariff"
+                        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold">Saqlash</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const activeTab = ref('users');
+                const users = ref([]);
+                const tariffs = ref([]);
+
+                const showUserModal = ref(false);
+                const editingUser = ref({});
+
+                const showTariffModal = ref(false);
+                const editingTariff = ref({});
+
+                onMounted(async () => {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) window.location.href = '/login';
+                    // Should verify role here or handle 403 from API
+
+                    await loadData();
+                });
+
+                const loadData = async () => {
+                    const token = localStorage.getItem('access_token');
+                    const headers = { 'Authorization': `Bearer ${token}` };
+
+                    try {
+                        const [resUsers, resTariffs] = await Promise.all([
+                            fetch('/api/admin/users', { headers }),
+                            fetch('/api/admin/tariffs', { headers })
+                        ]);
+
+                        if (resUsers.ok) users.value = await resUsers.json();
+                        if (resTariffs.ok) tariffs.value = await resTariffs.json();
+
+                    } catch (e) {
+                        console.error("Error loading admin data", e);
+                    }
+                };
+
+                const getTariffName = (id) => {
+                    const t = tariffs.value.find(x => x.id === id);
+                    return t ? t.name : '-';
+                };
+
+                const editUser = (user) => {
+                    editingUser.value = { ...user };
+                    showUserModal.value = true;
+                };
+
+                const saveUser = async () => {
+                    const token = localStorage.getItem('access_token');
+                    try {
+                        const res = await fetch(`/api/admin/users/${editingUser.value.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(editingUser.value)
+                        });
+                        if (res.ok) {
+                            showUserModal.value = false;
+                            loadData();
+                        }
+                    } catch (e) { console.error(e); }
+                };
+
+                const openTariffModal = (tariff = null) => {
+                    if (tariff) editingTariff.value = { ...tariff };
+                    else editingTariff.value = { name: '', daily_limit: 5, is_active: true };
+                    showTariffModal.value = true;
+                };
+
+                const saveTariff = async () => {
+                    const token = localStorage.getItem('access_token');
+                    const isNew = !editingTariff.value.id;
+                    const url = isNew ? '/api/admin/tariffs' : `/api/admin/tariffs/${editingTariff.value.id}`;
+                    const method = isNew ? 'POST' : 'PUT';
+
+                    try {
+                        const res = await fetch(url, {
+                            method: method,
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(editingTariff.value)
+                        });
+                        if (res.ok) {
+                            showTariffModal.value = false;
+                            loadData();
+                        }
+                    } catch (e) { console.error(e); }
+                };
+
+                return {
+                    activeTab, users, tariffs,
+                    getTariffName,
+                    showUserModal, editingUser, editUser, saveUser,
+                    showTariffModal, editingTariff, openTariffModal, saveTariff
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

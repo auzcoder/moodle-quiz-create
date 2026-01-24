@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirish - Moodle Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+
+    <div id="app" class="w-full max-w-md p-6">
+        <div class="glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1
+                    class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
+                    Moodle Converter</h1>
+                <p class="text-slate-400 text-sm">Kirish uchun hisobingizga kiring</p>
+            </div>
+
+            <!-- Login Form -->
+            <form @submit.prevent="handleLogin" class="space-y-4">
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
+                    <div class="relative">
+                        <input v-model="email" type="email"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="email@domain.com" required>
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Parol</label>
+                    <div class="relative">
+                        <input v-model="password" type="password"
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="••••••••" required>
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500"></i>
+                    </div>
+                    <div class="text-right mt-1">
+                        <a href="/pass-restore" class="text-xs text-blue-400 hover:text-blue-300">Parolni
+                            unutdingizmi?</a>
+                    </div>
+                </div>
+
+                <button type="submit" :disabled="loading"
+                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
+                    <span v-if="!loading">Kirish</span>
+                    <i v-else class="fas fa-spinner fa-spin"></i>
+                </button>
+
+                <div v-if="error"
+                    class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                    {{ error }}
+                </div>
+
+                <div class="text-center mt-4 text-sm text-slate-400">
+                    Hisobingiz yo'qmi? <a href="/register"
+                        class="text-blue-400 hover:text-blue-300 font-semibold">Ro'yxatdan o'tish</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const email = ref('');
+                const password = ref('');
+                const loading = ref(false);
+                const error = ref('');
+
+                // Check if already logged in
+                onMounted(() => {
+                    const token = localStorage.getItem('access_token');
+                    if (token) {
+                        window.location.href = '/dashboard';
+                    }
+                });
+
+                const handleLogin = async () => {
+                    loading.value = true;
+                    error.value = '';
+
+                    try {
+                        const res = await fetch('/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: email.value, password: password.value })
+                        });
+
+                        const data = await res.json();
+
+                        if (!res.ok) {
+                            if (data.detail && data.detail.includes("tasdiqlanmagan")) {
+                                localStorage.setItem('pending_email', email.value);
+                                window.location.href = '/register?mode=verify';
+                                return;
+                            }
+                            throw new Error(data.detail || 'Kirishda xatolik');
+                        }
+
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        window.location.href = '/dashboard';
+
+                    } catch (err) {
+                        error.value = err.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                return { email, password, loading, error, handleLogin };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

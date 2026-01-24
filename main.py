@@ -13,7 +13,7 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -131,6 +131,17 @@ def init_db():
         conn = get_db_connection()
         cur = conn.cursor()
         
+        # Tariffs Table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS tariffs (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                daily_limit INTEGER NOT NULL DEFAULT 5,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # Jobs Table
         cur.execute('''
             CREATE TABLE IF NOT EXISTS jobs (
@@ -138,7 +149,8 @@ def init_db():
                 filename TEXT,
                 status TEXT,
                 message TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                user_id INTEGER
             )
         ''')
         
@@ -151,9 +163,20 @@ def init_db():
                 phone TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
                 is_verified BOOLEAN DEFAULT FALSE,
+                role INTEGER DEFAULT 2,
+                tariff_id INTEGER REFERENCES tariffs(id),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+
+        # Idempotent Column Additions (for existing DB)
+        try:
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role INTEGER DEFAULT 2")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_id INTEGER REFERENCES tariffs(id)")
+            cur.execute("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER")
+        except Exception as e:
+            logger.warning(f"Alter table warning: {e}")
+            conn.rollback()
         
         # Verification Codes Table
         cur.execute('''
@@ -164,6 +187,11 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Seed Default Tariff
+        cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
+        if not cur.fetchone():
+             cur.execute("INSERT INTO tariffs (name, daily_limit) VALUES ('Free', 5)")
         
         conn.commit()
         cur.close()
@@ -239,12 +267,20 @@ async def register(user: UserRegister):
 
         hashed_pw = get_password_hash(user.password)
         
+        # Get Free Tariff
+        cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
+        tariff_row = cur.fetchone()
+        tariff_id = tariff_row[0] if tariff_row else None
+        
+        # Determine Role
+        role = 1 if user.email == "auz.offical@gmail.com" else 2
+        
         # Insert User (Unverified)
         cur.execute("""
-            INSERT INTO users (full_name, email, phone, password_hash, is_verified)
-            VALUES (%s, %s, %s, %s, FALSE)
+            INSERT INTO users (full_name, email, phone, password_hash, is_verified, role, tariff_id)
+            VALUES (%s, %s, %s, %s, FALSE, %s, %s)
             RETURNING id
-        """, (user.full_name, user.email, raw_phone, hashed_pw))
+        """, (user.full_name, user.email, raw_phone, hashed_pw, role, tariff_id))
         
         user_id = cur.fetchone()[0]
         
@@ -439,13 +475,18 @@ async def login(user: UserLogin):
     try:
         cur = conn.cursor()
         
-        cur.execute("SELECT id, full_name, password_hash, is_verified FROM users WHERE email = %s", (user.email,))
+        cur.execute("""
+            SELECT u.id, u.full_name, u.password_hash, u.is_verified, u.role, t.daily_limit, t.name as tariff_name 
+            FROM users u
+            LEFT JOIN tariffs t ON u.tariff_id = t.id
+            WHERE u.email = %s
+        """, (user.email,))
         row = cur.fetchone()
         
         if not row:
             raise HTTPException(status_code=400, detail="Email yoki parol noto'g'ri")
             
-        user_id, full_name, pw_hash, is_verified = row
+        user_id, full_name, pw_hash, is_verified, role, limit, tariff_name = row
         
         # DEBUG LOGGING
         print(f"LOGIN ATTEMPT: {user.email}, is_verified={is_verified} (type: {type(is_verified)})")
@@ -459,9 +500,18 @@ async def login(user: UserLogin):
              raise HTTPException(status_code=400, detail="Email tasdiqlanmagan. Iltimos avval tasdiqlang")
              
         # Generate Token
-        token = create_access_token({"sub": user.email, "user_id": user_id, "name": full_name})
+        token = create_access_token({"sub": user.email, "user_id": user_id, "name": full_name, "role": role})
         
-        return {"access_token": token, "token_type": "bearer", "user": {"full_name": full_name, "email": user.email}}
+        return {
+            "access_token": token, 
+            "token_type": "bearer", 
+            "user": {
+                "full_name": full_name, 
+                "email": user.email, 
+                "role": role,
+                "tariff": {"name": tariff_name, "limit": limit}
+            }
+        }
         
     except HTTPException as he:
         raise he
@@ -742,8 +792,113 @@ async def get_stats():
         conn.close()
 
 @app.get("/")
-async def read_root():
-    return FileResponse('static/index.html')
+async def root():
+    return RedirectResponse(url="/dashboard")
+
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse('templates/dashboard.html')
+
+@app.get("/login")
+async def login_page():
+    return FileResponse('templates/auth/login.html')
+
+@app.get("/register")
+async def register_page():
+    return FileResponse('templates/auth/register.html')
+
+@app.get("/pass-restore")
+async def pass_restore_page():
+    return FileResponse('templates/auth/pass-restore.html')
+
+@app.get("/register")
+async def register_page():
+    return FileResponse('templates/auth/register.html')
+
+@app.get("/pass-restore")
+async def pass_restore_page():
+    return FileResponse('templates/auth/pass-restore.html')
+
+@app.get("/admin")
+async def admin_dashboard():
+    return FileResponse('templates/admin/dashboard.html')
+
+# --- Admin API Models ---
+class UserUpdate(BaseModel):
+    role: int
+    tariff_id: int
+
+class TariffCreate(BaseModel):
+    name: str
+    daily_limit: int
+    is_active: bool
+
+class TariffUpdate(BaseModel):
+    name: str
+    daily_limit: int
+    is_active: bool
+
+# --- Admin API Endpoints ---
+@app.get("/api/admin/users")
+async def get_all_users():
+    # TODO: Add proper JWT Admin check here (using dependency)
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT id, full_name, email, phone, role, is_verified, tariff_id, created_at FROM users ORDER BY id ASC")
+        users = cur.fetchall()
+        # Convert datetime to str
+        for u in users:
+            u['created_at'] = str(u['created_at'])
+        return users
+    finally:
+        conn.close()
+
+@app.put("/api/admin/users/{user_id}")
+async def update_user(user_id: int, data: UserUpdate):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET role = %s, tariff_id = %s WHERE id = %s", (data.role, data.tariff_id, user_id))
+        conn.commit()
+        return {"message": "User updated"}
+    finally:
+        conn.close()
+
+@app.get("/api/admin/tariffs")
+async def get_tariffs():
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM tariffs ORDER BY id ASC")
+        tariffs = cur.fetchall()
+        for t in tariffs:
+            t['created_at'] = str(t['created_at'])
+        return tariffs
+    finally:
+        conn.close()
+
+@app.post("/api/admin/tariffs")
+async def create_tariff(data: TariffCreate):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO tariffs (name, daily_limit, is_active) VALUES (%s, %s, %s)", (data.name, data.daily_limit, data.is_active))
+        conn.commit()
+        return {"message": "Tariff created"}
+    finally:
+        conn.close()
+
+@app.put("/api/admin/tariffs/{tariff_id}")
+async def update_tariff(tariff_id: int, data: TariffUpdate):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE tariffs SET name = %s, daily_limit = %s, is_active = %s WHERE id = %s", (data.name, data.daily_limit, data.is_active, tariff_id))
+        conn.commit()
+        return {"message": "Tariff updated"}
+    finally:
+        conn.close()
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):

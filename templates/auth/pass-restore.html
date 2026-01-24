@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parolni tiklash - Moodle Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+
+    <div id="app" class="w-full max-w-md p-6">
+        <div class="glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+
+            <!-- STEP 1: REQUEST CODE (Forgot) -->
+            <div v-if="step === 'email'">
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-bold text-white">Parolni Tiklash</h3>
+                    <p class="text-slate-400 text-xs">Emailingizni kiriting va biz kod yuboramiz</p>
+                </div>
+                <form @submit.prevent="sendCode" class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Email</label>
+                        <div class="relative">
+                            <input v-model="email" type="email"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="email@domain.com" required>
+                            <i class="fas fa-envelope absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+                    <button type="submit" :disabled="loading"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
+                        <span v-if="!loading">Kodni Yuborish</span>
+                        <i v-else class="fas fa-spinner fa-spin"></i>
+                    </button>
+                    <div class="text-center mt-4">
+                        <a href="/login" class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 2: RESET PASSWORD -->
+            <div v-else-if="step === 'reset'">
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-bold text-white">Yangi Parol</h3>
+                    <p class="text-slate-400 text-xs">Tasdiqlash kodi va yangi parolni kiriting</p>
+                </div>
+                <form @submit.prevent="resetPassword" class="space-y-4">
+                    <div class="flex justify-center mb-4">
+                        <input v-model="code" maxlength="4"
+                            class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="CODE">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Yangi Parol</label>
+                        <div class="relative">
+                            <input v-model="newPassword" type="password"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••••••" required>
+                            <i class="fas fa-lock absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Tasdiqlash</label>
+                        <div class="relative">
+                            <input v-model="confirmPassword" type="password"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="••••••••" required>
+                            <i class="fas fa-check absolute left-3 top-3.5 text-slate-500"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit" :disabled="loading"
+                        class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
+                        <span v-if="!loading">Parolni Yangilash</span>
+                        <i v-else class="fas fa-spinner fa-spin"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- STEP 3: SUCCESS -->
+            <div v-else class="text-center py-8">
+                <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-3xl text-green-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Muvaffaqiyatli!</h3>
+                <p class="text-slate-400 text-sm mb-6">Parolingiz yangilandi. Endi yangi parol bilan kirishingiz mumkin.
+                </p>
+                <a href="/login" class="block w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg">Login
+                    sahifasiga o'tish</a>
+            </div>
+
+            <!-- Error Message -->
+            <div v-if="error"
+                class="text-center text-red-400 text-sm mt-4 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                {{ error }}
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+
+        createApp({
+            setup() {
+                const step = ref('email'); // 'email', 'reset', 'success'
+                const loading = ref(false);
+                const error = ref('');
+
+                const email = ref('');
+                const code = ref('');
+                const newPassword = ref('');
+                const confirmPassword = ref('');
+
+                const sendCode = async () => {
+                    loading.value = true;
+                    error.value = '';
+                    try {
+                        const res = await fetch('/auth/forgot-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: email.value })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail || 'Xatolik');
+
+                        step.value = 'reset';
+                    } catch (err) {
+                        error.value = err.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const resetPassword = async () => {
+                    if (newPassword.value !== confirmPassword.value) {
+                        error.value = "Parollar mos emas";
+                        return;
+                    }
+
+                    loading.value = true;
+                    error.value = '';
+                    try {
+                        const res = await fetch('/auth/reset-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                email: email.value,
+                                code: code.value,
+                                new_password: newPassword.value
+                            })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail || 'Xatolik');
+
+                        step.value = 'success';
+                    } catch (err) {
+                        error.value = err.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                return {
+                    step, loading, error,
+                    email, code, newPassword, confirmPassword,
+                    sendCode, resetPassword
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
