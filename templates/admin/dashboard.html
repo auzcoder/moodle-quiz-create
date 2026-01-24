@@ -106,10 +106,18 @@
                 class="pb-2 px-4 font-medium transition-all">
                 Tariflar
             </button>
+            <button @click="activeTab = 'payments'"
+                :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'payments', 'text-slate-400 hover:text-white': activeTab !== 'payments'}"
+                class="pb-2 px-4 font-medium transition-all">
+                To'lovlar
+                <span v-if="pendingPaymentsCount > 0"
+                    class="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingPaymentsCount
+                    }}</span>
+            </button>
             <button @click="activeTab = 'transactions'"
                 :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'transactions', 'text-slate-400 hover:text-white': activeTab !== 'transactions'}"
                 class="pb-2 px-4 font-medium transition-all">
-                Tarix (Transaktsiyalar)
+                Tarix
             </button>
         </div>
 
@@ -155,6 +163,58 @@
                                     <i class="fas fa-edit"></i>
                                 </button>
                             </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAYMENTS TAB -->
+        <div v-if="activeTab === 'payments'">
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Foydalanuvchi</th>
+                            <th>Chek (Rasm)</th>
+                            <th>Holati</th>
+                            <th>Sana</th>
+                            <th>Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="p in payments" :key="p.id">
+                            <td>
+                                <div class="font-bold text-white">{{ p.full_name }}</div>
+                                <div class="text-xs text-slate-400">{{ p.email }}</div>
+                            </td>
+                            <td>
+                                <a :href="'/uploads/' + p.receipt_img" target="_blank"
+                                    class="block w-16 h-12 bg-slate-800 rounded overflow-hidden relative group border border-slate-700">
+                                    <img :src="'/uploads/' + p.receipt_img" class="w-full h-full object-cover">
+                                    <div
+                                        class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
+                                        <i class="fas fa-eye text-white"></i>
+                                    </div>
+                                </a>
+                            </td>
+                            <td>
+                                <span :class="getStatusClass(p.status)"
+                                    class="px-2 py-1 rounded text-xs font-bold border capitalize">
+                                    {{ getStatusLabel(p.status) }}
+                                </span>
+                            </td>
+                            <td class="text-slate-400 text-xs">{{ formatDate(p.created_at) }}</td>
+                            <td>
+                                <button v-if="p.status === 'pending'" @click="openPaymentModal(p)"
+                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors">
+                                    Ko'rib chiqish
+                                </button>
+                                <span v-else class="text-xs text-slate-500">Yakunlandi</span>
+                            </td>
+                        </tr>
+                        <tr v-if="payments.length === 0">
+                            <td colspan="5" class="text-center py-8 text-slate-500">Tasdiqlanmagan to'lovlar yo'q</td>
                         </tr>
                     </tbody>
                 </table>
@@ -256,6 +316,73 @@
             </div>
         </div>
 
+        <!-- Payment Decision Modal -->
+        <div v-if="showPaymentModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
+            @click.self="showPaymentModal = false">
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-lg">
+                <h3 class="text-xl font-bold text-white mb-4">To'lovni Tasdiqlash</h3>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <div class="text-xs text-slate-400 uppercase mb-1">Foydalanuvchi</div>
+                        <div class="text-white">{{ processingPayment.full_name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 uppercase mb-1">Sana</div>
+                        <div class="text-white">{{ formatDate(processingPayment.created_at) }}</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="text-xs text-slate-400 uppercase mb-1">Chek Rasmi</div>
+                    <img :src="'/uploads/' + processingPayment.receipt_img"
+                        class="w-full h-48 object-contain bg-slate-900 rounded-lg border border-slate-700">
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Qo'shiladigan Summa (So'm)</label>
+                        <input v-model="processingDecision.amount" type="number"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-lg">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Izoh (Admin Note)</label>
+                        <textarea v-model="processingDecision.note"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white h-20"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Qaror</label>
+                        <select v-model="processingDecision.status"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-bold"
+                            :class="{
+                                'text-green-400': processingDecision.status === 'approved',
+                                'text-red-400': ['rejected', 'fake', 'failed', 'cancelled'].includes(processingDecision.status)
+                            }">
+                            <option value="approved">✅ Tasdiqlandi (Approved)</option>
+                            <option value="rejected">❌ Tasdiqlanamadi (Rejected)</option>
+                            <option value="fake">⚠️ Soxta chek (Fake Receipt)</option>
+                            <option value="failed">🚫 To'lov o'tmadi (Payment Failed)</option>
+                            <option value="cancelled">⏹️ To'lov bekor qilindi (Cancelled)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 mt-6">
+                    <button @click="showPaymentModal = false"
+                        class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Bekor
+                        qilish</button>
+                    <button @click="submitDecision"
+                        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold flex items-center gap-2">
+                        <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
+                        <span>Tasdiqlash</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Tariff Modal -->
         <div v-if="showTariffModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
@@ -270,20 +397,19 @@
                             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">Tarif Narxi (So'm)</label>
-                        <input v-model="editingTariff.price" type="number"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">1 ta Fayl Narxi (Limit
-                            tugaganda)</label>
-                        <input v-model="editingTariff.file_cost" type="number"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
-                    </div>
-                    <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Oylik Limit</label>
-                        <input v-model="editingTariff.daily_limit" type="number"
+                        <input v-model="editingTariff.daily_limit" type="number" @input="calculatePrice"
                             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">1 ta Fayl Narxi</label>
+                        <input v-model="editingTariff.file_cost" type="number" @input="calculatePrice"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Tarif Narxi (Limit * Narx)</label>
+                        <input v-model="editingTariff.price" type="number" readonly
+                            class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-amber-400 font-bold cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Muddat (Kun)</label>
@@ -317,12 +443,20 @@
                 const users = ref([]);
                 const tariffs = ref([]);
                 const transactions = ref([]);
+                const payments = ref([]);
 
                 const showUserModal = ref(false);
                 const editingUser = ref({});
 
                 const showTariffModal = ref(false);
                 const editingTariff = ref({});
+
+                // Payment state
+                const showPaymentModal = ref(false);
+                const processingPayment = ref({});
+                const processingDecision = ref({ status: 'approved', amount: 0, note: '' });
+                const isSubmitting = ref(false);
+                const pendingPaymentsCount = computed(() => payments.value.filter(p => p.status === 'pending').length);
 
                 const fetchTransactions = async () => {
                     try {
@@ -337,13 +471,15 @@
                     const headers = { 'Authorization': `Bearer ${token}` };
 
                     try {
-                        const [resUsers, resTariffs] = await Promise.all([
+                        const [resUsers, resTariffs, resPayments] = await Promise.all([
                             fetch('/api/admin/users', { headers }),
-                            fetch('/api/admin/tariffs', { headers })
+                            fetch('/api/admin/tariffs', { headers }),
+                            fetch('/api/admin/payments', { headers })
                         ]);
 
                         if (resUsers.ok) users.value = await resUsers.json();
                         if (resTariffs.ok) tariffs.value = await resTariffs.json();
+                        if (resPayments.ok) payments.value = await resPayments.json();
 
                         // Fetch Tx
                         fetchTransactions();
@@ -430,6 +566,69 @@
                     return new Intl.NumberFormat('uz-UZ').format(price) + ' so\'m';
                 };
 
+                const calculatePrice = () => {
+                    if (editingTariff.value.daily_limit && editingTariff.value.file_cost) {
+                        editingTariff.value.price = editingTariff.value.daily_limit * editingTariff.value.file_cost;
+                    } else {
+                        editingTariff.value.price = 0;
+                    }
+                };
+
+                const openPaymentModal = (p) => {
+                    processingPayment.value = p;
+                    processingDecision.value = { status: 'approved', amount: 0, note: '' };
+                    showPaymentModal.value = true;
+                };
+
+                const submitDecision = async () => {
+                    isSubmitting.value = true;
+                    try {
+                        const token = localStorage.getItem('access_token');
+                        const res = await fetch(`/api/admin/payments/${processingPayment.value.id}/decide`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(processingDecision.value)
+                        });
+                        if (res.ok) {
+                            showPaymentModal.value = false;
+                            loadData();
+                        } else {
+                            const err = await res.json();
+                            alert("Error: " + err.detail);
+                        }
+                    } catch (e) { console.error(e); }
+                    finally { isSubmitting.value = false; }
+                };
+
+                const getStatusClass = (status) => {
+                    const map = {
+                        'pending': 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+                        'approved': 'bg-green-500/10 text-green-500 border-green-500/20',
+                        'rejected': 'bg-red-500/10 text-red-500 border-red-500/20',
+                        'fake': 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+                        'failed': 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+                        'cancelled': 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                    };
+                    return map[status] || 'bg-slate-700 text-slate-300';
+                };
+
+                const getStatusLabel = (status) => {
+                    const map = {
+                        'pending': 'Kutilmoqda',
+                        'approved': 'Tasdiqlandi',
+                        'rejected': 'Tasdiqlanamadi',
+                        'fake': 'Soxta chek',
+                        'failed': 'To\'lov o\'tmadi',
+                        'cancelled': 'Bekor qilindi'
+                    };
+                    return map[status] || status;
+                };
+
+                const formatDate = (dateString) => {
+                    if (!dateString) return '-';
+                    return new Date(dateString).toLocaleString('uz-UZ');
+                };
+
                 const logout = () => {
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('user');
@@ -440,7 +639,9 @@
                     activeTab, users, tariffs, transactions,
                     getTariffName,
                     showUserModal, editingUser, openUserModal, saveUser,
-                    showTariffModal, editingTariff, openTariffModal, saveTariff,
+                    showTariffModal, editingTariff, openTariffModal, saveTariff, calculatePrice,
+                    showPaymentModal, processingPayment, processingDecision, openPaymentModal, submitDecision, isSubmitting,
+                    payments, pendingPaymentsCount, getStatusClass, getStatusLabel, formatDate,
                     formatPhone, formatPrice, fetchTransactions, logout
                 };
             }

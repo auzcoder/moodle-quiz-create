@@ -439,6 +439,11 @@
                 const fileInput = ref(null);
                 const activeModal = ref(null);
 
+                // Payment State
+                const selectedTariff = ref(null);
+                const receiptFile = ref(null);
+                const isSubmitting = ref(false);
+
                 // Job State
                 const job = ref({ id: null, status: null, message: '', filename: '' });
                 const progress = ref(0);
@@ -510,7 +515,50 @@
 
 
 
-                const showModal = (name) => activeModal.value = name;
+                const showModal = (name) => {
+                    activeModal.value = name;
+                    selectedTariff.value = null; // Reset selection
+                    receiptFile.value = null;
+                };
+
+                const selectTariff = (t) => selectedTariff.value = t;
+
+                const copyCard = () => {
+                    navigator.clipboard.writeText("8600123456789012");
+                    alert("Karta raqami nusxalandi!");
+                };
+
+                const handleReceiptSelect = (e) => {
+                    if (e.target.files.length > 0) receiptFile.value = e.target.files[0];
+                };
+
+                const submitPayment = async () => {
+                    if (!receiptFile.value) return;
+                    isSubmitting.value = true;
+
+                    const formData = new FormData();
+                    formData.append('file', receiptFile.value);
+
+                    try {
+                        const token = localStorage.getItem('access_token');
+                        const res = await fetch('/api/pay', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            alert(data.message);
+                            activeModal.value = null;
+                        } else {
+                            alert("Xatolik: " + data.detail);
+                        }
+                    } catch (e) {
+                        alert("Server xatosi");
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
 
                 const triggerFileInput = () => fileInput.value.click();
 
@@ -609,7 +657,8 @@
                 return {
                     user, me, tariffs, stats, isDragOver, fileInput, activeModal, job, progress,
                     logout, showModal, triggerFileInput, handleDrop, handleFiles,
-                    statusIcon, statusIconClass, statusTextClass, formatPrice, limitReached
+                    statusIcon, statusIconClass, statusTextClass, formatPrice, limitReached,
+                    selectedTariff, receiptFile, isSubmitting, selectTariff, copyCard, handleReceiptSelect, submitPayment
                 };
             }
         }).mount('#app');
