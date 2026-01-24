@@ -320,7 +320,12 @@
                 const tariffs = ref([]);
                 const activeModal = ref(null);
 
+                const selectedTariff = ref(null);
+                const receiptFile = ref(null);
+                const isSubmitting = ref(false);
                 const paymentTxId = ref('');
+
+                const selectTariff = (t) => selectedTariff.value = t;
 
                 onMounted(async () => {
                     const token = localStorage.getItem('access_token');
