@@ -1282,9 +1282,18 @@ async def create_payment_request(
             RETURNING id
         """, (current_user["id"], filename, payload.transaction_id, payload.tariff_id))
         conn.commit()
+        
+        # message construction
+        msg = "To'lov cheki yuborildi. Admin tasdiqlashini kuting."
+        if payload.tariff_id:
+             cur.execute("SELECT name FROM tariffs WHERE id = %s", (payload.tariff_id,))
+             t = cur.fetchone()
+             if t:
+                 msg = f"To'lov yuborildi. Admin tasdiqlashi bilan '{t[0]}' tarifi AVTOMATIK faollashadi."
+
         cur.close()
         conn.close()
-        return {"status": "success", "message": "To'lov cheki yuborildi. Admin tasdiqlashini kuting."}
+        return {"status": "success", "message": msg}
         
     except Exception as e:
         logger.error(f"Payment upload failed: {e}")
@@ -1324,13 +1333,16 @@ async def decide_payment(
 ):
     conn = get_db_connection()
     try:
-        cur = conn.cursor()
-        cur.execute("SELECT user_id, status FROM payment_requests WHERE id = %s", (id,))
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT user_id, status, tariff_id FROM payment_requests WHERE id = %s", (id,))
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="To'lov topilmadi")
         
-        user_id, current_status = row
+        user_id = row['user_id']
+        current_status = row['status']
+        requested_tariff_id = row['tariff_id']
+
         if current_status != 'pending':
             raise HTTPException(status_code=400, detail="Bu to'lov allaqachon ko'rib chiqilgan")
 
@@ -1341,11 +1353,36 @@ async def decide_payment(
         """, (decision.status, decision.note, id))
         
         if decision.status == 'approved' and decision.amount > 0:
-            cur.execute("UPDATE users SET balance = balance + %s WHERE id = %s", (decision.amount, user_id))
+            # 1. Credit Balance
+            cur.execute("UPDATE users SET balance = balance + %s WHERE id = %s RETURNING balance", (decision.amount, user_id))
+            updated_user = cur.fetchone()
+            current_balance = updated_user['balance']
+
             cur.execute("""
                 INSERT INTO transactions (user_id, amount, type, description)
                 VALUES (%s, %s, 'credit', 'Payment Approved via Receipt')
             """, (user_id, decision.amount))
+            
+            # 2. Check for Auto-Activation of Tariff
+            if requested_tariff_id:
+                cur.execute("SELECT * FROM tariffs WHERE id = %s", (requested_tariff_id,))
+                tariff = cur.fetchone()
+                
+                if tariff and tariff['is_active'] and current_balance >= tariff['price']:
+                    # Auto-Purchase
+                    new_balance = current_balance - tariff['price']
+                    expires_at = datetime.datetime.now() + datetime.timedelta(days=tariff['duration_days'])
+                    
+                    cur.execute("""
+                        UPDATE users 
+                        SET balance = %s, tariff_id = %s, tariff_expires_at = %s 
+                        WHERE id = %s
+                    """, (new_balance, tariff['id'], expires_at, user_id))
+                    
+                    cur.execute("""
+                        INSERT INTO transactions (user_id, amount, type, description)
+                        VALUES (%s, %s, 'debit', %s)
+                    """, (user_id, -tariff['price'], f"Auto-Activated: {tariff['name']}"))
             
         conn.commit()
         cur.close()
