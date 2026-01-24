@@ -83,6 +83,27 @@
         </div>
 
         <div class="relative z-10 p-8 md:p-12">
+            <!-- Mode Switcher -->
+            <div class="flex justify-center gap-6 mb-10">
+                <!-- Active Moodle Card -->
+                <div class="relative group cursor-pointer">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200"></div>
+                    <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                        <i class="fas fa-graduation-cap text-blue-400 text-xl"></i>
+                        <span class="font-bold text-slate-100">Moodle</span>
+                    </div>
+                </div>
+
+                <!-- Inactive Hemis Card -->
+                <div class="relative group cursor-not-allowed grayscale opacity-60 hover:opacity-75 transition-opacity">
+                    <div class="px-6 py-3 bg-slate-800/50 rounded-xl flex items-center space-x-3 border border-slate-700/50">
+                        <i class="fas fa-university text-slate-400 text-xl"></i>
+                        <span class="font-medium text-slate-400">Hemis</span>
+                        <span class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez kunda...</span>
+                    </div>
+                </div>
+            </div>
+
             <header class="text-center mb-12">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">
                     <span class="gradient-text">Moodle Test Konvertori</span>
