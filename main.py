@@ -200,6 +200,7 @@ def init_db():
         safe_alter("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS file_cost INTEGER DEFAULT 0")
         
         safe_alter("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER")
+        safe_alter("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS cost INTEGER DEFAULT 0")
         
         # Payment Requests Table
         cur.execute('''
@@ -619,6 +620,28 @@ def update_job_status(job_id: str, status: str, message: str = ""):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
+        
+        # Check Job Cost for Refund
+        if status == 'error':
+             # Get job cost and user
+             cur.execute("SELECT user_id, cost FROM jobs WHERE id = %s", (job_id,))
+             job = cur.fetchone()
+             
+             if job and job[1] > 0: # If cost > 0
+                 user_id = job[0]
+                 cost = job[1]
+                 
+                 # Refund Balance
+                 cur.execute("UPDATE users SET balance = balance + %s WHERE id = %s", (cost, user_id))
+                 
+                 # Record Refund Transaction
+                 cur.execute("""
+                    INSERT INTO transactions (user_id, amount, type, description)
+                    VALUES (%s, %s, 'refund', %s)
+                 """, (user_id, cost, f"Muvaffaqiyatsiz konvertatsiya uchun qaytarildi (#{job_id})"))
+                 
+                 logger.info(f"Refunded {cost} to user {user_id} for failed job {job_id}")
+
         cur.execute("UPDATE jobs SET status = %s, message = %s WHERE id = %s", (status, message, job_id))
         conn.commit()
         cur.close()
@@ -665,15 +688,25 @@ def convert_to_gift(input_path: str, output_path: str):
     Supports Windows (MS Word) and Linux (LibreOffice).
     """
     abs_input_path = os.path.abspath(input_path)
-    # We will work inside a temporary directory to avoid OneDrive file locking/sync issues
-    with tempfile.TemporaryDirectory() as temp_dir:
+    abs_input_path = os.path.abspath(input_path)
+    
+    # Create a local temp directory in the project folder to ensure Word can access it (avoiding AppData or Temp restrictions)
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    temp_work_dir = os.path.join(project_root, "temp_conversion")
+    os.makedirs(temp_work_dir, exist_ok=True)
+    
+    # Create a unique subdir for this job
+    job_temp_dir = os.path.join(temp_work_dir, f"job_{uuid.uuid4()}")
+    os.makedirs(job_temp_dir, exist_ok=True)
+
+    try:
         # Copy input file to temp dir
         filename_ext = os.path.basename(abs_input_path)
         filename = os.path.splitext(filename_ext)[0]
-        temp_input_path = os.path.join(temp_dir, filename_ext)
+        temp_input_path = os.path.join(job_temp_dir, filename_ext)
         shutil.copy2(abs_input_path, temp_input_path)
         
-        base_dir = temp_dir
+        base_dir = job_temp_dir
         
         # We target .htm or .html in the temp dir
         htm_path = os.path.join(base_dir, f"{filename}.htm")
@@ -851,6 +884,17 @@ def convert_to_gift(input_path: str, output_path: str):
         # Write final output to the real output path
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(output_lines))
+
+    except Exception as e:
+        logger.error(f"Conversion process failed: {e}")
+        raise e
+    finally:
+        # Cleanup
+        try:
+            if 'job_temp_dir' in locals() and os.path.exists(job_temp_dir):
+                shutil.rmtree(job_temp_dir)
+        except Exception as ignored:
+            logger.warning(f"Failed to cleanup temp dir: {ignored}")
 
 async def process_conversion(job_id: str, input_path: str, output_path: str, is_legacy: bool):
     try:
@@ -1115,7 +1159,7 @@ async def get_me(authorization: Optional[str] = Header(None)):
 
         cur.execute("""
             SELECT COUNT(*) as count FROM jobs 
-            WHERE user_id = %s AND created_at >= %s
+            WHERE user_id = %s AND created_at >= %s AND status != 'error'
         """, (user.get('id'), start_date))
         
         row = cur.fetchone()
@@ -1194,7 +1238,7 @@ async def upload_file_endpoint(
         if last_change and last_change > start_of_month:
             effective_start = last_change
             
-        cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s", (user_id, effective_start))
+        cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s AND status != 'error'", (user_id, effective_start))
         effective_usage = cur.fetchone()[0]
 
         # Check Expiry
@@ -1240,8 +1284,8 @@ async def upload_file_endpoint(
         with open(input_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        cur.execute("INSERT INTO jobs (id, filename, status, created_at, user_id) VALUES (%s, %s, %s, %s, %s)", 
-                  (job_id, file.filename, "queued", datetime.datetime.now(), user_id))
+        cur.execute("INSERT INTO jobs (id, filename, status, created_at, user_id, cost) VALUES (%s, %s, %s, %s, %s, %s)", 
+                  (job_id, file.filename, "queued", datetime.datetime.now(), user_id, file_cost if not is_free_upload else 0))
         conn.commit()
     
         background_tasks.add_task(process_conversion, job_id, input_path, output_path, False)
