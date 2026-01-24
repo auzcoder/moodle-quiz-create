@@ -178,6 +178,15 @@
                 </div>
             </div>
 
+
+        </div>
+        
+        <!-- Stats Footer -->
+        <div class="mt-8 text-center">
+            <p class="text-slate-400 text-sm bg-slate-800/50 inline-block px-4 py-2 rounded-full border border-slate-700/50 backdrop-blur-sm">
+                <i class="fas fa-file-circle-check text-blue-400 mr-2"></i>
+                Jami tayyorlangan fayllar: <span id="statsCount" class="font-bold text-white">...</span>
+            </p>
         </div>
     </div>
 
@@ -318,6 +327,9 @@
                 spread: 70,
                 origin: { y: 0.6 }
             });
+            
+            // Update stats after successful conversion
+            updateStats();
         }
 
         function failJob(message) {
@@ -327,8 +339,22 @@
             statusIconEl.innerHTML = '<i class="fas fa-times"></i>';
             progressBar.classList.replace('from-blue-500', 'from-red-500');
             progressBar.classList.replace('to-indigo-500', 'to-red-600');
+            progressBar.classList.replace('to-indigo-500', 'to-red-600');
             progressBar.style.width = '100%';
         }
+        
+        async function updateStats() {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                document.getElementById('statsCount').textContent = data.count;
+            } catch (e) {
+                console.error("Stats error", e);
+            }
+        }
+        
+        // Initial load
+        updateStats();
     </script>
 </body>
 

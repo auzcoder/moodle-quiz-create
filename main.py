@@ -300,7 +300,17 @@ async def process_conversion(job_id: str, input_path: str, output_path: str, is_
 
 # --- Endpoints ---
 
-@app.get("/", methods=["GET", "HEAD"])
+@app.get("/stats")
+async def get_stats():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    # Count only completed jobs
+    c.execute("SELECT COUNT(*) FROM jobs WHERE status = 'completed'")
+    count = c.fetchone()[0]
+    conn.close()
+    return {"count": count}
+
+@app.get("/")
 async def read_root():
     return FileResponse('static/index.html')
 
