@@ -225,6 +225,49 @@
             </div>
         </div>
 
+        <!-- TRANSACTIONS TAB -->
+        <div v-if="activeTab === 'transactions'">
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Foydalanuvchi</th>
+                            <th>Summa</th>
+                            <th>Turi</th>
+                            <th>Izoh</th>
+                            <th>Sana</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="t in transactions" :key="t.id">
+                            <td class="text-slate-500 font-mono text-xs">#{{ t.id }}</td>
+                            <td>
+                                <div>
+                                    <div class="font-bold text-white">{{ t.full_name }}</div>
+                                    <div class="text-xs text-slate-400">{{ t.email }}</div>
+                                </div>
+                            </td>
+                            <td class="font-mono font-bold" :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
+                                {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
+                            </td>
+                            <td>
+                                <span class="px-2 py-1 rounded text-xs font-bold border capitalize"
+                                    :class="t.type === 'deposit' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'">
+                                    {{ t.type }}
+                                </span>
+                            </td>
+                            <td class="text-slate-300 text-sm">{{ t.description || '-' }}</td>
+                            <td class="text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
+                        </tr>
+                        <tr v-if="transactions.length === 0">
+                            <td colspan="6" class="text-center py-8 text-slate-500">O'tkazmalar tarixi bo'sh</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- TARIFFS TAB -->
         <div v-if="activeTab === 'tariffs'">
             <div class="flex justify-end mb-4">
@@ -343,6 +386,12 @@
                     <div class="text-xs text-slate-400 uppercase mb-1">Chek Rasmi</div>
                     <img :src="'/uploads/' + processingPayment.receipt_img"
                         class="w-full h-48 object-contain bg-slate-900 rounded-lg border border-slate-700">
+
+                    <div v-if="processingPayment.declared_amount" class="mt-2 text-center">
+                        <div class="text-xs text-slate-400 uppercase">Foydalanuvchi kiritgan summa:</div>
+                        <div class="text-xl font-mono text-amber-400 font-bold">{{
+                            formatPrice(processingPayment.declared_amount) }}</div>
+                    </div>
                 </div>
 
                 <div class="space-y-4">
@@ -602,8 +651,8 @@
 
                 const openPaymentModal = (p) => {
                     processingPayment.value = p;
-                    // Auto-fill price if tariff exists
-                    const initialAmount = p.tariff_price || 0;
+                    // Auto-fill price: Tariff Price > Declared Amount > 0
+                    const initialAmount = p.tariff_price || p.declared_amount || 0;
                     processingDecision.value = { status: 'approved', amount: initialAmount, note: '' };
                     displayAmount.value = initialAmount > 0 ? new Intl.NumberFormat('ru-RU').format(initialAmount).replace(/,/g, ' ') : '';
                     showPaymentModal.value = true;

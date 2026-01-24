@@ -216,6 +216,7 @@ def init_db():
         ''')
         safe_alter("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS transaction_id TEXT")
         safe_alter("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS tariff_id INTEGER")
+        safe_alter("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS declared_amount INTEGER DEFAULT 0")
 
         # Transactions Table
         cur.execute('''
@@ -1287,6 +1288,7 @@ class PaymentRequest(BaseModel):
     transaction_id: str
     image: str # Base64 string
     tariff_id: Optional[int] = None
+    amount: Optional[int] = 0
 
 @app.post("/api/pay")
 async def create_payment_request(
@@ -1310,10 +1312,10 @@ async def create_payment_request(
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO payment_requests (user_id, receipt_img, transaction_id, status, tariff_id)
-            VALUES (%s, %s, %s, 'pending', %s)
+            INSERT INTO payment_requests (user_id, receipt_img, transaction_id, status, tariff_id, declared_amount)
+            VALUES (%s, %s, %s, 'pending', %s, %s)
             RETURNING id
-        """, (current_user["id"], filename, payload.transaction_id, payload.tariff_id))
+        """, (current_user["id"], filename, payload.transaction_id, payload.tariff_id, payload.amount))
         conn.commit()
         
         # message construction
@@ -1338,7 +1340,7 @@ async def get_payment_requests(current_user: dict = Depends(get_current_admin_us
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            SELECT p.*, u.full_name, u.email, t.name as tariff_name, t.price as tariff_price
+            SELECT p.*, u.full_name, u.email, t.name as tariff_name, t.price as tariff_price, p.declared_amount
             FROM payment_requests p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN tariffs t ON p.tariff_id = t.id
