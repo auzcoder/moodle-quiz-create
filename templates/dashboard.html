@@ -515,6 +515,7 @@
                 const selectedTariff = ref(null);
                 const receiptFile = ref(null);
                 const isSubmitting = ref(false);
+                const paymentTxId = ref('');
 
                 // Job State
                 const job = ref({ id: null, status: null, message: '', filename: '' });
@@ -593,10 +594,7 @@
                     receiptFile.value = null;
                 };
 
-                const selectedTariff = ref(null);
-                const receiptFile = ref(null);
-                const isSubmitting = ref(false);
-                const paymentTxId = ref('');
+
 
                 const copyCard = () => {
                     navigator.clipboard.writeText("9860010123651621");
