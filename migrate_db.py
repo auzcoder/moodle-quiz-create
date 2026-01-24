@@ -37,6 +37,22 @@ def migrate():
             "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER"
         ]
 
+        # Create Transactions Table
+        try:
+             cur.execute('''
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id),
+                    amount INTEGER NOT NULL,
+                    type TEXT NOT NULL,
+                    description TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+             print("Created table 'transactions' (if not exists)")
+        except Exception as e:
+             print(f"Error creating transactions table: {e}")
+
         for cmd in commands:
             print(f"Executing: {cmd}")
             try:
@@ -54,20 +70,24 @@ def migrate():
         except:
             pass
 
-        # Verification of columns
-        print("\nVerifying 'users' columns:")
-        cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")
-        columns = [row[0] for row in cur.fetchall()]
-        print(columns)
+        # Verify Tables
+        print("\n--- Verifying Tables ---")
+        cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+        tables = [row[0] for row in cur.fetchall()]
+        print(f"Tables found: {tables}")
         
-        if 'balance' in columns:
-            print("\nSUCCESS: 'balance' column exists!")
+        if 'transactions' in tables:
+            print("SUCCESS: 'transactions' table EXISTS.")
+            # Verify columns of transactions
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'transactions'")
+            cols = [row[0] for row in cur.fetchall()]
+            print(f"Columns in transactions: {cols}")
         else:
-            print("\nFAILURE: 'balance' column missing!")
+            print("FAILURE: 'transactions' table does NOT exist!")
 
         cur.close()
         conn.close()
-        print("\nMigration completed.")
+        print("\nCheck completed.")
 
     except Exception as e:
         print(f"CRITICAL ERROR: {e}")
