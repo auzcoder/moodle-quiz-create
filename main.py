@@ -198,15 +198,19 @@ def init_db():
         
         safe_alter("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER")
         
-        # Verification Codes Table
+        # Payment Requests Table
         cur.execute('''
-            CREATE TABLE IF NOT EXISTS verification_codes (
-                email TEXT PRIMARY KEY,
-                code TEXT NOT NULL,
-                expires_at TIMESTAMP NOT NULL,
+            CREATE TABLE IF NOT EXISTS payment_requests (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                receipt_img TEXT NOT NULL,
+                transaction_id TEXT,
+                status TEXT DEFAULT 'pending',
+                admin_note TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        safe_alter("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS transaction_id TEXT")
 
         # Transactions Table
         cur.execute('''

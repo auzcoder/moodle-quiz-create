@@ -444,8 +444,8 @@
                                 <div class="text-xs text-slate-500 uppercase tracking-wider mb-2">To'lov uchun karta
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <div class="text-xl font-mono font-bold text-white tracking-wider">8600 1234 5678
-                                        9012</div>
+                                    <div class="text-xl font-mono font-bold text-white tracking-wider">9860 0101 2365
+                                        1621</div>
                                     <button @click="copyCard" class="text-blue-400 hover:text-white transition-colors"
                                         title="Nusxalash">
                                         <i class="fas fa-copy"></i>
@@ -457,10 +457,12 @@
                             <!-- User ID Info -->
                             <div
                                 class="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 flex gap-3 text-sm text-amber-200">
-                                <i class="fas fa-info-circle text-lg shrink-0 mt-0.5"></i>
+                                <i class="fas fa-exclamation-triangle text-lg shrink-0 mt-0.5"></i>
                                 <div>
-                                    To'lov izohiga (kommentariyaga) ID raqamingizni yozishni unutmang:
-                                    <div class="font-bold font-mono text-white mt-1 text-lg">ID: {{ user.id }}</div>
+                                    To'lov izohiga (kommentariyaga) ushbu ID ni yozing:
+                                    <div class="font-bold font-mono text-white mt-1 text-lg">ID: {{ paymentTxId }}</div>
+                                    <div class="text-[10px] opacity-70 mt-1">To'lovdan so'ng chek rasmini yuborish
+                                        majburiy.</div>
                                 </div>
                             </div>
 
@@ -591,10 +593,13 @@
                     receiptFile.value = null;
                 };
 
-                const selectTariff = (t) => selectedTariff.value = t;
+                const selectedTariff = ref(null);
+                const receiptFile = ref(null);
+                const isSubmitting = ref(false);
+                const paymentTxId = ref('');
 
                 const copyCard = () => {
-                    navigator.clipboard.writeText("8600123456789012");
+                    navigator.clipboard.writeText("9860010123651621");
                     alert("Karta raqami nusxalandi!");
                 };
 
