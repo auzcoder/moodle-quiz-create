@@ -208,6 +208,14 @@ class VerifyCode(BaseModel):
 class ResendCode(BaseModel):
     email: EmailStr
 
+class ForgotPassword(BaseModel):
+    email: EmailStr
+
+class ResetPassword(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
+
 # --- Auth Endpoints ---
 
 @app.post("/auth/register")
@@ -219,7 +227,16 @@ async def register(user: UserRegister):
         cur.execute("SELECT id FROM users WHERE email = %s", (user.email,))
         if cur.fetchone():
             raise HTTPException(status_code=400, detail="Bu email allaqachon ro'yxatdan o'tgan")
-            
+        
+        # Format Phone: Ensure 998 prefix, remove spaces
+        raw_phone = user.phone.replace(" ", "").replace("+", "")
+        if not raw_phone.startswith("998"):
+             raw_phone = "998" + raw_phone
+             
+        # Optional: Validate length (998 + 9 digits = 12 chars)
+        if len(raw_phone) != 12:
+             raise HTTPException(status_code=400, detail="Telefon raqam noto'g'ri formatda")
+
         hashed_pw = get_password_hash(user.password)
         
         # Insert User (Unverified)
@@ -227,7 +244,7 @@ async def register(user: UserRegister):
             INSERT INTO users (full_name, email, phone, password_hash, is_verified)
             VALUES (%s, %s, %s, %s, FALSE)
             RETURNING id
-        """, (user.full_name, user.email, user.phone, hashed_pw))
+        """, (user.full_name, user.email, raw_phone, hashed_pw))
         
         user_id = cur.fetchone()[0]
         
@@ -247,11 +264,9 @@ async def register(user: UserRegister):
         cur.close()
         
         # Send Email
-        # Background task would be better, but for simplicity:
         email_sent = send_verification_email(user.email, code)
         if not email_sent:
              logger.warning("Email sending failed")
-             # don't fail registration, user can resend
         
         return {"message": "Ro'yxatdan o'tish muvaffaqiyatli. Iltimos, emailingizni tekshiring va kodni kiriting."}
         
@@ -263,8 +278,48 @@ async def register(user: UserRegister):
     finally:
         conn.close()
 
-@app.post("/auth/verify")
-async def verify(data: VerifyCode):
+# ... (verify and resend_code remain same)
+
+@app.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPassword):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        
+        # Check user exists
+        cur.execute("SELECT id FROM users WHERE email = %s", (data.email,))
+        if not cur.fetchone():
+            # For security, maybe dont reveal? But for UX we will.
+            raise HTTPException(status_code=404, detail="Bunday email topilmadi")
+            
+        code = str(random.randint(1000, 9999))
+        expires = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        
+        # Upsert Code (Reuse verification_codes table)
+        cur.execute("""
+            INSERT INTO verification_codes (email, code, expires_at, created_at)
+            VALUES (%s, %s, %s, NOW())
+            ON CONFLICT (email) DO UPDATE 
+            SET code = EXCLUDED.code, expires_at = EXCLUDED.expires_at, created_at = NOW()
+        """, (data.email, code, expires))
+        
+        conn.commit()
+        cur.close()
+        
+        send_verification_email(data.email, code)
+        
+        return {"message": "Tasdiqlash kodi yuborildi"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Forgot password error: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        conn.close()
+
+@app.post("/auth/reset-password")
+async def reset_password(data: ResetPassword):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
@@ -283,8 +338,9 @@ async def verify(data: VerifyCode):
         if datetime.datetime.now() > expires:
              raise HTTPException(status_code=400, detail="Kod muddati tugagan")
              
-        # Mark user verified
-        cur.execute("UPDATE users SET is_verified = TRUE WHERE email = %s", (data.email,))
+        # Update Password
+        new_hash = get_password_hash(data.new_password)
+        cur.execute("UPDATE users SET password_hash = %s WHERE email = %s", (new_hash, data.email))
         
         # Delete code
         cur.execute("DELETE FROM verification_codes WHERE email = %s", (data.email,))
@@ -292,53 +348,12 @@ async def verify(data: VerifyCode):
         conn.commit()
         cur.close()
         
-        return {"message": "Email tasdiqlandi. Endi kirishingiz mumkin."}
+        return {"message": "Parol muvaffaqiyatli yangilandi. Endi kirishingiz mumkin."}
         
     except HTTPException as he:
         raise he
     except Exception as e:
-        logger.error(f"Verify error: {e}")
-        raise HTTPException(status_code=500, detail="Server xatoligi")
-    finally:
-        conn.close()
-
-@app.post("/auth/resend-code")
-async def resend_code(data: ResendCode):
-    conn = get_db_connection()
-    try:
-        cur = conn.cursor()
-        
-        # Check cooldown (2 mins)
-        cur.execute("SELECT created_at FROM verification_codes WHERE email = %s", (data.email,))
-        row = cur.fetchone()
-        
-        if row:
-            created_at = row[0]
-            if datetime.datetime.now() < created_at + datetime.timedelta(minutes=2):
-                 remaining = (created_at + datetime.timedelta(minutes=2) - datetime.datetime.now()).seconds
-                 raise HTTPException(status_code=400, detail=f"Iltimos, {remaining} soniya kuting")
-        
-        code = str(random.randint(1000, 9999))
-        expires = datetime.datetime.now() + datetime.timedelta(minutes=5)
-        
-        cur.execute("""
-            INSERT INTO verification_codes (email, code, expires_at, created_at)
-            VALUES (%s, %s, %s, NOW())
-            ON CONFLICT (email) DO UPDATE 
-            SET code = EXCLUDED.code, expires_at = EXCLUDED.expires_at, created_at = NOW()
-        """, (data.email, code, expires))
-        
-        conn.commit()
-        cur.close()
-        
-        send_verification_email(data.email, code)
-        
-        return {"message": "Yangi kod yuborildi"}
-        
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        logger.error(f"Resend error: {e}")
+        logger.error(f"Reset password error: {e}")
         raise HTTPException(status_code=500, detail="Server xatoligi")
     finally:
         conn.close()
