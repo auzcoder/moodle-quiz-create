@@ -126,70 +126,74 @@
 
                 </div>
 
-                <!-- Tariff Info -->
-                <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
-                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <i class="fas fa-crown text-amber-400"></i>
-                        Tarif Rejasi
-                    </h3>
+                <!-- Right Column: Tariff & Transactions -->
+                <div class="space-y-6">
+                    <!-- Tariff Info -->
+                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-crown text-amber-400"></i>
+                            Tarif Rejasi
+                        </h3>
 
-                    <div class="mb-6 text-center">
-                        <div
-                            class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-1">
-                            {{ user.tariff_name || 'Free' }}
+                        <div class="mb-6 text-center">
+                            <div
+                                class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-1">
+                                {{ user.tariff_name || 'Free' }}
+                            </div>
+                            <div class="text-xs text-slate-400">
+                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at)
+                                    }}</span>
+                            </div>
                         </div>
-                        <div class="text-xs text-slate-400">
-                            Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at)
+
+                        <!-- Usage Bar -->
+                        <div class="mb-2 flex justify-between text-sm">
+                            <span class="text-slate-400">Bugungi Limit</span>
+                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0
                                 }}</span>
                         </div>
+                        <div class="w-full bg-slate-700 rounded-full h-2.5 mb-6 overflow-hidden">
+                            <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
+                                :style="{ width: usagePercent + '%' }"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <button
+                                class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm">
+                                Tarifni Yangilash
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Usage Bar -->
-                    <div class="mb-2 flex justify-between text-sm">
-                        <span class="text-slate-400">Bugungi Limit</span>
-                        <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0
-                            }}</span>
-                    </div>
-                    <div class="w-full bg-slate-700 rounded-full h-2.5 mb-6 overflow-hidden">
-                        <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
-                            :style="{ width: usagePercent + '%' }"></div>
-                    </div>
-
-                    <div class="text-center">
-                        <button
-                            class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm">
-                            Tarifni Yangilash
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Transactions Card (Inside Right Column) -->
-                <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 mt-6">
-                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <i class="fas fa-history text-blue-400"></i>
-                        Oxirgi O'tkazmalar
-                    </h3>
-                    <div class="overflow-hidden rounded-xl border border-slate-700/50">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-900/50 text-slate-400">
-                                <tr>
-                                    <th class="px-3 py-2">Sana</th>
-                                    <th class="px-3 py-2">Summa</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-700/50">
-                                <tr v-for="t in transactions.slice(0, 5)" :key="t.id">
-                                    <td class="px-3 py-2 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
-                                    <td class="px-3 py-2 font-mono font-bold text-xs"
-                                        :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
-                                        {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
-                                    </td>
-                                </tr>
-                                <tr v-if="transactions.length === 0">
-                                    <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Transactions Card -->
+                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-history text-blue-400"></i>
+                            Oxirgi O'tkazmalar
+                        </h3>
+                        <div class="overflow-hidden rounded-xl border border-slate-700/50">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-900/50 text-slate-400">
+                                    <tr>
+                                        <th class="px-3 py-2">Sana</th>
+                                        <th class="px-3 py-2">Summa</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700/50">
+                                    <tr v-for="t in transactions.slice(0, 5)" :key="t.id">
+                                        <td class="px-3 py-2 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
+                                        <td class="px-3 py-2 font-mono font-bold text-xs"
+                                            :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
+                                            {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
+                                        </td>
+                                    </tr>
+                                    <tr v-if="transactions.length === 0">
+                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -246,9 +250,27 @@
                             <div class="text-sm text-indigo-300 uppercase tracking-wider mb-1">Tanlangan Tarif</div>
                             <div class="text-2xl font-bold text-white mb-1">{{ selectedTariff.name }}</div>
                             <div class="text-xl text-indigo-400 font-mono">{{ formatPrice(selectedTariff.price) }}</div>
+                            <div class="text-xl text-indigo-400 font-mono">{{ formatPrice(selectedTariff.price) }}</div>
                         </div>
 
-                        <div class="space-y-4">
+                        <!-- Pay with Balance Option -->
+                        <div v-if="user.balance >= selectedTariff.price"
+                            class="bg-indigo-600/20 rounded-xl p-4 border border-indigo-500/50 mb-4 animate-pulse">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-indigo-300 font-bold"><i class="fas fa-wallet mr-2"></i>Balansdan
+                                    to'lash</div>
+                                <div class="text-white font-mono font-bold">{{ formatPrice(user.balance) }} mavjud</div>
+                            </div>
+                            <button @click="buyWithBalance" :disabled="isSubmitting"
+                                class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-500/30 flex justify-center items-center gap-2">
+                                <span v-if="!isSubmitting">Hozir Sotib Olish</span>
+                                <i v-else class="fas fa-spinner fa-spin"></i>
+                            </button>
+                            <div class="text-center mt-2 text-xs text-indigo-300">Hisobingizdan {{
+                                formatPrice(selectedTariff.price) }} yechiladi</div>
+                        </div>
+
+                        <div class="space-y-4" v-else>
                             <!-- Card Info -->
                             <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden">
                                 <div
@@ -403,6 +425,50 @@
                     }
                 };
 
+                const buyWithBalance = async () => {
+                    if (!selectedTariff.value) return;
+                    isSubmitting.value = true;
+                    try {
+                        const token = localStorage.getItem('access_token');
+                        const res = await fetch(`/api/tariffs/buy/${selectedTariff.value.id}`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Tabriklaymiz!',
+                                text: data.message,
+                                confirmButtonColor: '#3b82f6'
+                            });
+                            activeModal.value = null;
+                            // Update local user data
+                            user.value.balance = data.new_balance;
+                            user.value.tariff_name = data.tariff;
+                            user.value.tariff_expires_at = data.expires_at;
+                            user.value.daily_limit = selectedTariff.value.daily_limit;
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Xatolik!',
+                                text: data.detail || 'Balans yetarli emas',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Server Xatosi',
+                            text: 'Internet aloqasini tekshiring',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
+
                 onMounted(async () => {
                     const token = localStorage.getItem('access_token');
                     if (!token) window.location.href = '/login';
@@ -460,7 +526,7 @@
                 return {
                     user, loading, transactions, getInitials, formatDate, usagePercent, formatPhone, formatPrice,
                     tariffs, activeModal, selectedTariff, receiptFile, isSubmitting, paymentTxId,
-                    selectTariff, showModal, submitPayment, copyCard
+                    selectTariff, showModal, submitPayment, copyCard, buyWithBalance
                 };
             }
         }).mount('#app');

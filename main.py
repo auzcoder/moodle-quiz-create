@@ -1357,6 +1357,64 @@ async def decide_payment(
     finally:
         conn.close()
 
+@app.post("/api/tariffs/buy/{id}")
+async def buy_tariff(id: int, current_user: dict = Depends(get_current_active_user)):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get Tariff
+        cur.execute("SELECT * FROM tariffs WHERE id = %s", (id,))
+        tariff = cur.fetchone()
+        
+        if not tariff:
+            raise HTTPException(status_code=404, detail="Tarif topilmadi")
+            
+        if not tariff['is_active']:
+             raise HTTPException(status_code=400, detail="Bu tarif aktiv emas")
+             
+        # Check Balance
+        if current_user['balance'] < tariff['price']:
+             raise HTTPException(status_code=400, detail="Balans yetarli emas")
+             
+        # Process Purchase
+        new_balance = current_user['balance'] - tariff['price']
+        expires_at = datetime.datetime.now() + datetime.timedelta(days=tariff['duration_days'])
+        
+        # 1. Deduct Balance & Update Tariff
+        cur.execute("""
+            UPDATE users 
+            SET balance = %s, tariff_id = %s, tariff_expires_at = %s 
+            WHERE id = %s
+        """, (new_balance, id, expires_at, current_user['id']))
+        
+        # 2. Record Transaction
+        cur.execute("""
+            INSERT INTO transactions (user_id, amount, type, description)
+            VALUES (%s, %s, 'debit', %s)
+        """, (current_user['id'], -tariff['price'], f"Tarif sotib olindi: {tariff['name']}"))
+        
+        conn.commit()
+        cur.close()
+        
+        return {
+            "status": "success", 
+            "message": f"{tariff['name']} tarifi muvaffaqiyatli sotib olindi",
+            "new_balance": new_balance,
+            "tariff": tariff['name'],
+            "expires_at": expires_at.isoformat()
+        }
+        
+    except HTTPException as he:
+        conn.rollback()
+        raise he
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Tarif purchase failed: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
