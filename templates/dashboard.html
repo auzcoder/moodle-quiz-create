@@ -112,7 +112,7 @@
         </div>
 
         <div class="flex-grow flex items-center justify-center p-4">
-            <div class="max-w-4xl w-full glass-panel rounded-3xl overflow-hidden relative">
+            <div class="max-w-7xl w-full glass-panel rounded-3xl overflow-hidden relative">
                 <!-- Decorative blobs -->
                 <div
                     class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob">
@@ -134,17 +134,26 @@
                             </div>
                         </div>
 
-                        <!-- Limit Checker -->
+                        <!-- Limit Checker (EXPANDED) -->
                         <div class="relative group cursor-pointer" @click="showModal('pricing')">
                             <div
-                                class="px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3 border border-slate-700/50">
-                                <i class="fas fa-chart-pie text-indigo-400 text-xl"></i>
-                                <div class="text-left">
-                                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Oylik Limit</div>
-                                    <div class="text-sm font-bold text-white flex items-center gap-2">
-                                        {{ me.used_today || 0 }} / {{ me.daily_limit || 0 }}
-                                        <span v-if="me.used_today >= me.daily_limit"
-                                            class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">To'ldi</span>
+                                class="px-10 py-4 bg-slate-900 rounded-xl flex items-center space-x-4 border border-slate-700/50 min-w-[200px] transform transition-all group-hover:scale-105 shadow-xl">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
+                                    <i class="fas fa-chart-pie text-indigo-400 text-2xl"></i>
+                                </div>
+                                <div class="text-left flex-grow">
+                                    <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Oylik Limit</div>
+                                    <div
+                                        class="text-xl font-bold text-white flex items-center justify-between w-full gap-4">
+                                        <span>{{ me.used_today || 0 }} / {{ me.daily_limit || 0 }}</span>
+                                        <span v-if="limitReached"
+                                            class="text-xs bg-red-500 text-white px-2 py-0.5 rounded animate-pulse shadow-lg shadow-red-500/50">To'ldi</span>
+                                    </div>
+                                    <!-- Progress Bar -->
+                                    <div class="w-full bg-slate-700/50 h-1.5 mt-2 rounded-full overflow-hidden">
+                                        <div class="bg-indigo-500 h-full rounded-full transition-all duration-1000"
+                                            :style="{ width: Math.min(100, ((me.used_today || 0) / (me.daily_limit || 1)) * 100) + '%' }">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -206,13 +215,32 @@
                                 <span class="text-xs text-slate-400">{{ me.used_today }}/{{ me.daily_limit }}</span>
                             </div>
 
-                            <div class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group"
-                                :class="{ 'active': isDragOver }" @dragover.prevent="isDragOver = true"
+                            <div class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group overflow-hidden"
+                                :class="{ 'active': isDragOver, 'cursor-not-allowed': limitReached }"
+                                @dragover.prevent="!limitReached && (isDragOver = true)"
                                 @dragleave.prevent="isDragOver = false" @drop.prevent="handleDrop"
                                 @click="triggerFileInput">
+
+                                <!-- LOCK OVERLAY -->
+                                <div v-if="limitReached"
+                                    class="absolute inset-0 bg-slate-900/80 backdrop-blur-md z-20 flex flex-col items-center justify-center p-6 text-center border-2 border-red-500/30 rounded-2xl">
+                                    <div
+                                        class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 ring-2 ring-red-500/20 animate-pulse">
+                                        <i class="fas fa-lock text-3xl text-red-500"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-white mb-2">Oylik limit tugadi</h3>
+                                    <p class="text-slate-400 text-sm mb-4">Davom ettirish uchun tarifingizni yangilang.
+                                    </p>
+                                    <button @click.stop="showModal('pricing')"
+                                        class="px-6 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg font-bold shadow-lg shadow-red-500/25 transition-all transform hover:scale-105">
+                                        Tarifni o'zgartirish
+                                    </button>
+                                </div>
+
                                 <input type="file" ref="fileInput" class="hidden" accept=".doc,.docx"
-                                    @change="handleFiles">
-                                <div class="text-center p-6 transition-transform group-hover:scale-105">
+                                    @change="handleFiles" :disabled="limitReached">
+                                <div class="text-center p-6 transition-transform group-hover:scale-105"
+                                    :class="{'opacity-20 blur-sm': limitReached}">
                                     <div
                                         class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-blue-500/20 transition-all">
                                         <i class="fas fa-cloud-upload-alt text-3xl text-blue-400"></i>
@@ -420,6 +448,14 @@
                 // Job State
                 const job = ref({ id: null, status: null, message: '', filename: '' });
                 const progress = ref(0);
+
+                const limitReached = computed(() => {
+                    const used = me.value.used_today || 0;
+                    const limit = me.value.daily_limit || 0;
+                    // Only lock if limit is strictly positive and used >= limit
+                    // Also check if admin (role 1) might bypass, but request didn't fail
+                    return limit > 0 && used >= limit;
+                });
 
                 // Check Auth
                 onMounted(() => {
