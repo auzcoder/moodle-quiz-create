@@ -127,10 +127,22 @@ def send_verification_email(to_email: str, code: str):
 
 # --- Database Setup ---
 def init_db():
+    print(f"--- DB INIT CHECK ---")
+    print(f"Connecting to: {DB_NAME} as user: {DB_USER}")
     try:
         conn = get_db_connection()
+        conn.autocommit = True # Enable autocommit for creating tables/columns
         cur = conn.cursor()
         
+        # Helper to run safe alter
+        def safe_alter(sql):
+            try:
+                cur.execute(sql)
+                # print(f"Executed: {sql}") 
+            except Exception as e:
+                # print(f"Ignored: {e}")
+                pass
+
         # Tariffs Table
         cur.execute('''
             CREATE TABLE IF NOT EXISTS tariffs (
@@ -138,6 +150,8 @@ def init_db():
                 name TEXT NOT NULL,
                 daily_limit INTEGER NOT NULL DEFAULT 5,
                 duration_days INTEGER NOT NULL DEFAULT 30,
+                price INTEGER DEFAULT 0,
+                file_cost INTEGER DEFAULT 0,
                 is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -167,20 +181,22 @@ def init_db():
                 role INTEGER DEFAULT 2,
                 tariff_id INTEGER REFERENCES tariffs(id),
                 tariff_expires_at TIMESTAMP,
+                balance INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
 
-        # Idempotent Column Additions (for existing DB)
-        try:
-            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role INTEGER DEFAULT 2")
-            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_id INTEGER REFERENCES tariffs(id)")
-            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_expires_at TIMESTAMP")
-            cur.execute("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 30")
-            cur.execute("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER")
-        except Exception as e:
-            logger.warning(f"Alter table warning: {e}")
-            conn.rollback()
+        # Idempotent Column Additions (Run individually)
+        safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS role INTEGER DEFAULT 2")
+        safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_id INTEGER REFERENCES tariffs(id)")
+        safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_expires_at TIMESTAMP")
+        safe_alter("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0")
+        
+        safe_alter("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 30")
+        safe_alter("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS price INTEGER DEFAULT 0")
+        safe_alter("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS file_cost INTEGER DEFAULT 0")
+        
+        safe_alter("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER")
         
         # Verification Codes Table
         cur.execute('''
@@ -195,14 +211,19 @@ def init_db():
         # Seed Default Tariff
         cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
         if not cur.fetchone():
-             cur.execute("INSERT INTO tariffs (name, daily_limit, duration_days) VALUES ('Free', 5, 30)")
+             cur.execute("INSERT INTO tariffs (name, daily_limit, duration_days, price, file_cost) VALUES ('Free', 5, 30, 0, 0)")
         
-        conn.commit()
+        # VERIFY COLUMNS
+        cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")
+        cols = [r[0] for r in cur.fetchall()]
+        print(f"CURRENT USER COLUMNS: {cols}")
+        
         cur.close()
         conn.close()
         logger.info("Database initialized successfully.")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
+        print(f"DB INIT ERROR: {e}")
 
 # Initialize DB on startup
 init_db()
@@ -843,12 +864,16 @@ class TariffCreate(BaseModel):
     name: str
     daily_limit: int
     duration_days: int
+    price: int
+    file_cost: int
     is_active: bool
 
 class TariffUpdate(BaseModel):
     name: str
     daily_limit: int
     duration_days: int
+    price: int
+    file_cost: int
     is_active: bool
 
 # --- Admin API Endpoints ---
@@ -903,6 +928,15 @@ async def get_tariffs():
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
+        # Ensure columns exist
+        try:
+            cur.execute("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS price INTEGER DEFAULT 0")
+            cur.execute("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS file_cost INTEGER DEFAULT 0")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0")
+            conn.commit()
+        except:
+            conn.rollback()
+
         cur.execute("SELECT * FROM tariffs ORDER BY id ASC")
         tariffs = cur.fetchall()
         for t in tariffs:
@@ -916,8 +950,8 @@ async def create_tariff(data: TariffCreate):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("INSERT INTO tariffs (name, daily_limit, duration_days, is_active) VALUES (%s, %s, %s, %s)", 
-                  (data.name, data.daily_limit, data.duration_days, data.is_active))
+        cur.execute("INSERT INTO tariffs (name, daily_limit, duration_days, price, file_cost, is_active) VALUES (%s, %s, %s, %s, %s, %s)", 
+                  (data.name, data.daily_limit, data.duration_days, data.price, data.file_cost, data.is_active))
         conn.commit()
         return {"message": "Tariff created"}
     finally:
@@ -928,8 +962,8 @@ async def update_tariff(tariff_id: int, data: TariffUpdate):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("UPDATE tariffs SET name = %s, daily_limit = %s, duration_days = %s, is_active = %s WHERE id = %s", 
-                  (data.name, data.daily_limit, data.duration_days, data.is_active, tariff_id))
+        cur.execute("UPDATE tariffs SET name = %s, daily_limit = %s, duration_days = %s, price = %s, file_cost = %s, is_active = %s WHERE id = %s", 
+                  (data.name, data.daily_limit, data.duration_days, data.price, data.file_cost, data.is_active, tariff_id))
         conn.commit()
         return {"message": "Tariff updated"}
     finally:
@@ -938,18 +972,26 @@ async def update_tariff(tariff_id: int, data: TariffUpdate):
 @app.get("/api/me")
 async def get_me(authorization: Optional[str] = Header(None)):
     if not authorization: return JSONResponse({}, status_code=401)
+    conn = None
     try:
-        _, token = authorization.split()
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("user_id")
+        try:
+            scheme, token = authorization.split()
+            if scheme.lower() != 'bearer': raise Exception("Invalid Scheme")
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("user_id")
+        except Exception as e:
+            logger.error(f"Auth Token Error: {e}")
+            return JSONResponse({"detail": "Invalid Token"}, status_code=401)
         
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
         # User Info + Tariff + Expiry
+        # We explicitly list columns. If checking migration issues, select * is riskier if we depend on keys.
+        # But explicit keys are better.
         cur.execute("""
-            SELECT u.id, u.full_name, u.email, u.phone, u.role, u.tariff_expires_at, 
-                   t.name as tariff_name, t.daily_limit
+            SELECT u.id, u.full_name, u.email, u.phone, u.role, u.tariff_expires_at, u.balance,
+                   t.name as tariff_name, t.daily_limit, t.price, t.file_cost
             FROM users u
             LEFT JOIN tariffs t ON u.tariff_id = t.id
             WHERE u.id = %s
@@ -958,98 +1000,114 @@ async def get_me(authorization: Optional[str] = Header(None)):
         
         if not user: return JSONResponse({}, status_code=404)
         
-        # Usage Stats
-        start_of_day = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        # Calculate Monthly Usage
+        now = datetime.datetime.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
         cur.execute("""
-            SELECT COUNT(*) as used FROM jobs 
+            SELECT COUNT(*) FROM jobs 
             WHERE user_id = %s AND created_at >= %s
-        """, (user_id, start_of_day))
-        usage = cur.fetchone()
+        """, (user.get('id'), start_of_month))
         
-        user['tariff_expires_at'] = str(user['tariff_expires_at'])
-        user['used_today'] = usage['used']
+        used_month = cur.fetchone()[0]
+        user['used_today'] = used_month # Monthly usage
+        user['tariff_expires_at'] = str(user['tariff_expires_at']) if user['tariff_expires_at'] else None
         
-        conn.close()
+        # Basic null handling
+        if user['daily_limit'] is None: user['daily_limit'] = 0
+        if user['file_cost'] is None: user['file_cost'] = 0
+        if user['balance'] is None: user['balance'] = 0
+        
         return user
-        
-    except Exception:
-        return JSONResponse({}, status_code=401)
+    except Exception as e:
+        logger.error(f"Error in /api/me: {e}")
+        import traceback
+        traceback.print_exc() # Print to console
+        return JSONResponse({"detail": "Internal Server Error", "error": str(e)}, status_code=500)
+    finally:
+        if conn: conn.close()
 
 from fastapi import Header
 
 @app.post("/upload")
-async def upload_file(
+async def upload_file_endpoint(
     file: UploadFile = File(...), 
-    background_tasks: BackgroundTasks = None,
-    authorization: Optional[str] = Header(None)
+    authorization: Optional[str] = Header(None),
+    background_tasks: BackgroundTasks = BackgroundTasks()
 ):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Ro'yxatdan o'tmagansiz")
+    if not authorization: raise HTTPException(status_code=401, detail="Unauthorized")
     
     try:
-        scheme, token = authorization.split()
-        if scheme.lower() != 'bearer':
-            raise HTTPException(status_code=401, detail="Invalid auth scheme")
+        _, token = authorization.split()
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
-    except Exception:
-         raise HTTPException(status_code=401, detail="Invalid token")
-
-    # Check Limits
-    conn = get_db_connection()
-    try:
+        
+        conn = get_db_connection()
         cur = conn.cursor()
         
-        # Get User Tariff Info
+        # Get User & Tariff Info
         cur.execute("""
-            SELECT u.tariff_expires_at, t.daily_limit 
+            SELECT u.tariff_expires_at, u.balance, t.daily_limit, t.file_cost
             FROM users u
-            JOIN tariffs t ON u.tariff_id = t.id
+            LEFT JOIN tariffs t ON u.tariff_id = t.id
             WHERE u.id = %s
         """, (user_id,))
         row = cur.fetchone()
         
-        if not row:
-             raise HTTPException(status_code=400, detail="Foydalanuvchi topilmadi")
+        if not row: raise HTTPException(status_code=400, detail="Foydalanuvchi topilmadi")
              
-        expires_at, daily_limit = row
+        expires_at, balance, daily_limit, file_cost = row
         
-        # 1. Check Expiry
-        if expires_at and datetime.datetime.now() > expires_at:
-             raise HTTPException(status_code=403, detail="Tarif muddati tugagan. Iltimos tarifni yangilang.")
-             
-        # 2. Check Daily Usage
-        start_of_day = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        cur.execute("""
-            SELECT COUNT(*) FROM jobs 
-            WHERE user_id = %s AND created_at >= %s
-        """, (user_id, start_of_day))
+        # Defaults
+        if daily_limit is None: daily_limit = 0
+        if file_cost is None: file_cost = 0
+        if balance is None: balance = 0
         
-        usage_count = cur.fetchone()[0]
+        # Logic: 
+        # 1. If Tariff Active AND Limit Not Reached -> Free
+        # 2. ELSE -> Pay from Balance
         
-        if usage_count >= daily_limit:
-             raise HTTPException(status_code=403, detail=f"Kunlik limit ({daily_limit} ta) tugadi.")
-             
-        # Proceed
+        is_free_upload = False
+        
+        # Check Tariff Validity
+        if expires_at and datetime.datetime.now() <= expires_at:
+            # Check Monthly Limit
+            now = datetime.datetime.now()
+            start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s", (user_id, start_of_month))
+            usage_count = cur.fetchone()[0]
+            
+            if usage_count < daily_limit:
+                is_free_upload = True
+        
+        if not is_free_upload:
+            # Check Balance
+            if balance < file_cost:
+                raise HTTPException(status_code=403, detail=f"Mablag' yetarli emas! Fayl narxi: {file_cost} so'm. Hisobingizda: {balance} so'm")
+            
+            # Deduct Balance
+            new_balance = balance - file_cost
+            cur.execute("UPDATE users SET balance = %s WHERE id = %s", (new_balance, user_id))
+            
+        # Proceed with Upload
         job_id = str(uuid.uuid4())
         ext = os.path.splitext(file.filename)[1].lower()
         
         if ext not in [".doc", ".docx"]:
-            raise HTTPException(status_code=400, detail="Faqat .doc va .docx fayllar qo'llab-quvvatlanadi")
+            raise HTTPException(status_code=400, detail="Faqat .doc va .docx fayllar")
         
         input_filename = f"{job_id}{ext}"
         input_path = os.path.join(UPLOAD_DIR, input_filename)
         output_filename = f"{job_id}.txt"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         
-        # Save uploaded file
         with open(input_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
         cur.execute("INSERT INTO jobs (id, filename, status, created_at, user_id) VALUES (%s, %s, %s, %s, %s)", 
                   (job_id, file.filename, "queued", datetime.datetime.now(), user_id))
         conn.commit()
-        cur.close()
 
     except HTTPException as he:
         raise he

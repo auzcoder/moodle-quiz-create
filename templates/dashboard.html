@@ -91,9 +91,13 @@
                 <a href="/profile" class="flex flex-col items-end mr-2 group">
                     <span class="text-xs font-bold text-slate-200 group-hover:text-blue-400 transition-colors">{{
                         user.full_name || 'User' }}</span>
-                    <span class="text-[10px] text-slate-400">{{ me.tariff_name || 'Free' }} <span
-                            :class="{'text-red-400': me.used_today >= me.daily_limit, 'text-green-400': me.used_today < me.daily_limit}">({{
-                            me.used_today }}/{{ me.daily_limit }})</span></span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1 rounded">{{
+                            formatPrice(me.balance || 0) }}</span>
+                        <span class="text-[10px] text-slate-400">{{ me.tariff_name || 'Free' }} <span
+                                :class="{'text-red-400': me.used_today >= me.daily_limit, 'text-green-400': me.used_today < me.daily_limit}">({{
+                                me.used_today || 0 }}/{{ me.daily_limit || 0 }})</span></span>
+                    </div>
                 </a>
                 <a href="/profile"
                     class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-slate-800">
@@ -130,15 +134,19 @@
                             </div>
                         </div>
 
-                        <div
-                            class="relative group cursor-not-allowed grayscale opacity-60 hover:opacity-75 transition-opacity">
+                        <!-- Limit Checker -->
+                        <div class="relative group cursor-pointer" @click="showModal('pricing')">
                             <div
-                                class="px-6 py-3 bg-slate-800/50 rounded-xl flex items-center space-x-3 border border-slate-700/50">
-                                <i class="fas fa-university text-slate-400 text-xl"></i>
-                                <span class="font-medium text-slate-400">Hemis</span>
-                                <span
-                                    class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez
-                                    kunda...</span>
+                                class="px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3 border border-slate-700/50">
+                                <i class="fas fa-chart-pie text-indigo-400 text-xl"></i>
+                                <div class="text-left">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">Oylik Limit</div>
+                                    <div class="text-sm font-bold text-white flex items-center gap-2">
+                                        {{ me.used_today || 0 }} / {{ me.daily_limit || 0 }}
+                                        <span v-if="me.used_today >= me.daily_limit"
+                                            class="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">To'ldi</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -357,6 +365,44 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="activeModal === 'pricing'"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md"
+            @click.self="activeModal = null">
+            <div
+                class="bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl p-8 max-w-4xl w-full relative max-h-screen overflow-y-auto">
+                <button @click="activeModal = null" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+                <h3 class="text-3xl font-bold text-white mb-8 text-center">Tarif Rejalari</h3>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div v-for="t in tariffs" :key="t.id"
+                        class="bg-slate-900 rounded-2xl p-6 border border-slate-700 hover:border-blue-500 transition-colors relative overflow-hidden flex flex-col">
+                        <div v-if="me.tariff_id === t.id"
+                            class="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
+                            Aktiv</div>
+                        <h4 class="text-xl font-bold text-white mb-2">{{ t.name }}</h4>
+                        <div class="text-3xl font-bold text-blue-400 mb-4">{{ formatPrice(t.price) }}</div>
+                        <ul class="space-y-3 mb-8 flex-grow">
+                            <li class="flex items-center gap-2 text-slate-300 text-sm">
+                                <i class="fas fa-check text-green-400"></i> Oylik limit: {{ t.daily_limit }} ta fayl
+                            </li>
+                            <li class="flex items-center gap-2 text-slate-300 text-sm">
+                                <i class="fas fa-check text-green-400"></i> Muddat: {{ t.duration_days }} kun
+                            </li>
+                            <li class="flex items-center gap-2 text-slate-300 text-sm">
+                                <i class="fas fa-check text-green-400"></i> 24/7 Qo'llab-quvvatlash
+                            </li>
+                        </ul>
+                        <button
+                            class="w-full py-3 rounded-xl bg-slate-800 text-white font-bold border border-slate-600 hover:bg-slate-700 transition"
+                            @click="showModal('donate')">
+                            Tanlash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -385,14 +431,24 @@
                     user.value = JSON.parse(localStorage.getItem('user') || '{}');
                     fetchStats();
                     fetchMe();
+                    fetchTariffs();
                 });
 
                 const fetchMe = async () => {
                     const token = localStorage.getItem('access_token');
                     try {
                         const res = await fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (res.ok) me.value = await res.json();
-                    } catch (e) { }
+                        if (res.ok) {
+                            me.value = await res.json();
+                        } else {
+                            const err = await res.json();
+                            console.error("API Error:", err);
+                            // Only alert if it's not just an auth error (401 handled by redirect mostly)
+                            if (res.status === 500) alert("Server Xatoligi: " + (err.error || err.detail));
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
                 };
 
                 const logout = () => {
@@ -408,6 +464,21 @@
                         stats.value = data.count;
                     } catch (e) { }
                 };
+
+                const tariffs = ref([]);
+
+                const fetchTariffs = async () => {
+                    try {
+                        const res = await fetch('/api/admin/tariffs');
+                        if (res.ok) tariffs.value = await res.json();
+                    } catch (e) { }
+                };
+
+                const formatPrice = (price) => {
+                    return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
+                };
+
+
 
                 const showModal = (name) => activeModal.value = name;
 
@@ -474,6 +545,7 @@
                                 progress.value = 100;
                                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                                 fetchStats();
+                                fetchMe(); // Refresh limit stats
                             } else if (data.status === 'error') {
                                 clearInterval(interval);
                                 job.value.status = 'error';
@@ -505,9 +577,9 @@
                 });
 
                 return {
-                    user, me, stats, isDragOver, fileInput, activeModal, job, progress,
+                    user, me, tariffs, stats, isDragOver, fileInput, activeModal, job, progress,
                     logout, showModal, triggerFileInput, handleDrop, handleFiles,
-                    statusIcon, statusIconClass, statusTextClass
+                    statusIcon, statusIconClass, statusTextClass, formatPrice
                 };
             }
         }).mount('#app');

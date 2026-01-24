@@ -53,9 +53,20 @@
             </div>
 
             <!-- Content Grid -->
-            <div class="grid md:grid-cols-2 gap-8">
+            <div class="grid md:grid-cols-2 gap-8" v-if="!loading">
                 <!-- Personal Info -->
                 <div class="space-y-6">
+                    <div class="bg-indigo-500/10 rounded-2xl p-6 border border-indigo-500/20 mb-6">
+                        <div class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Mening Hisobim</div>
+                        <div class="flex items-end justify-between">
+                            <div class="text-2xl font-bold text-white">{{ formatPrice(user.balance || 0) }}</div>
+                            <button
+                                class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                                <i class="fas fa-plus"></i> To'ldirish
+                            </button>
+                        </div>
+                    </div>
+
                     <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy
                         Ma'lumotlar</h3>
 
@@ -189,7 +200,11 @@
                     return '+' + phone;
                 };
 
-                return { user, loading, getInitials, formatDate, usagePercent, formatPhone };
+                const formatPrice = (price) => {
+                    return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
+                };
+
+                return { user, loading, getInitials, formatDate, usagePercent, formatPhone, formatPrice };
             }
         }).mount('#app');
     </script>

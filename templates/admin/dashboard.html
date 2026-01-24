@@ -168,7 +168,9 @@
                     <thead>
                         <tr>
                             <th>Nomi</th>
-                            <th>Limit (Kunlik)</th>
+                            <th>Narxi</th>
+                            <th>Fayl Narxi</th>
+                            <th>Limit (Oylik)</th>
                             <th>Muddat (Kun)</th>
                             <th>Holati</th>
                             <th>Amallar</th>
@@ -177,6 +179,8 @@
                     <tbody>
                         <tr v-for="tariff in tariffs" :key="tariff.id">
                             <td class="font-bold text-white">{{ tariff.name }}</td>
+                            <td class="text-amber-400 font-mono">{{ formatPrice(tariff.price) }}</td>
+                            <td class="text-slate-300 font-mono">{{ formatPrice(tariff.file_cost) }}</td>
                             <td class="text-slate-300">{{ tariff.daily_limit }} ta fayl</td>
                             <td class="text-slate-300">{{ tariff.duration_days }} kun</td>
                             <td>
@@ -259,7 +263,18 @@
                             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">Kunlik Limit</label>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Tarif Narxi (So'm)</label>
+                        <input v-model="editingTariff.price" type="number"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">1 ta Fayl Narxi (Limit
+                            tugaganda)</label>
+                        <input v-model="editingTariff.file_cost" type="number"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Oylik Limit</label>
                         <input v-model="editingTariff.daily_limit" type="number"
                             class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
@@ -354,7 +369,7 @@
 
                 const openTariffModal = (tariff = null) => {
                     if (tariff) editingTariff.value = { ...tariff };
-                    else editingTariff.value = { name: '', daily_limit: 5, duration_days: 30, is_active: true };
+                    else editingTariff.value = { name: '', daily_limit: 5, duration_days: 30, price: 0, file_cost: 1000, is_active: true };
                     showTariffModal.value = true;
                 };
 
@@ -395,12 +410,17 @@
                     return '+' + phone;
                 };
 
+                const formatPrice = (price) => {
+                    if (!price) return '0 so\'m';
+                    return new Intl.NumberFormat('uz-UZ').format(price) + ' so\'m';
+                };
+
                 return {
                     activeTab, users, tariffs,
                     getTariffName,
                     showUserModal, editingUser, editUser, saveUser,
                     showTariffModal, editingTariff, openTariffModal, saveTariff,
-                    formatPhone
+                    formatPhone, formatPrice
                 };
             }
         }).mount('#app');
