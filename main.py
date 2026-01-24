@@ -209,10 +209,12 @@ def init_db():
                 transaction_id TEXT,
                 status TEXT DEFAULT 'pending',
                 admin_note TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                tariff_id INTEGER
             )
         ''')
         safe_alter("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS transaction_id TEXT")
+        safe_alter("ALTER TABLE payment_requests ADD COLUMN IF NOT EXISTS tariff_id INTEGER")
 
         # Transactions Table
         cur.execute('''
@@ -1251,6 +1253,7 @@ async def download_file(job_id: str):
 class PaymentRequest(BaseModel):
     transaction_id: str
     image: str # Base64 string
+    tariff_id: Optional[int] = None
 
 @app.post("/api/pay")
 async def create_payment_request(
@@ -1274,10 +1277,10 @@ async def create_payment_request(
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO payment_requests (user_id, receipt_img, transaction_id, status)
-            VALUES (%s, %s, %s, 'pending')
+            INSERT INTO payment_requests (user_id, receipt_img, transaction_id, status, tariff_id)
+            VALUES (%s, %s, %s, 'pending', %s)
             RETURNING id
-        """, (current_user["id"], filename, payload.transaction_id))
+        """, (current_user["id"], filename, payload.transaction_id, payload.tariff_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -1293,9 +1296,10 @@ async def get_payment_requests(current_user: dict = Depends(get_current_admin_us
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            SELECT p.*, u.full_name, u.email 
+            SELECT p.*, u.full_name, u.email, t.name as tariff_name
             FROM payment_requests p
             JOIN users u ON p.user_id = u.id
+            LEFT JOIN tariffs t ON p.tariff_id = t.id
             ORDER BY p.created_at DESC
         """)
         payments = cur.fetchall()

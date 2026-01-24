@@ -642,7 +642,8 @@
                             },
                             body: JSON.stringify({
                                 transaction_id: paymentTxId.value,
-                                image: base64Image
+                                image: base64Image,
+                                tariff_id: selectedTariff.value ? selectedTariff.value.id : null
                             })
                         });
                         const data = await res.json();

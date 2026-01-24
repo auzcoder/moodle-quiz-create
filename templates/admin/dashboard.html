@@ -176,6 +176,7 @@
                     <thead>
                         <tr>
                             <th>Foydalanuvchi</th>
+                            <th>Tarif</th>
                             <th>Chek (Rasm)</th>
                             <th>Holati</th>
                             <th>Sana</th>
@@ -187,6 +188,9 @@
                             <td>
                                 <div class="font-bold text-white">{{ p.full_name }}</div>
                                 <div class="text-xs text-slate-400">{{ p.email }}</div>
+                            </td>
+                            <td>
+                                <span class="text-amber-400 font-bold text-sm">{{ p.tariff_name || 'Noma\'lum' }}</span>
                             </td>
                             <td>
                                 <a :href="'/uploads/' + p.receipt_img" target="_blank"
