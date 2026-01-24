@@ -159,7 +159,8 @@
 
                         <div class="text-center">
                             <button
-                                class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm">
+                                class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm"
+                                @click="showModal('pricing')">
                                 Tarifni Yangilash
                             </button>
                         </div>
@@ -221,7 +222,27 @@
 
                 <div class="p-6 overflow-y-auto custom-scrollbar space-y-4">
                     <!-- Tariff List -->
+                    <!-- Tariff List Selection -->
                     <div v-if="!selectedTariff" class="space-y-4">
+                        <!-- Custom Topup Option -->
+                        <div class="bg-gradient-to-r from-indigo-900/50 to-purple-900/50 rounded-xl p-4 border border-indigo-500/30 hover:border-indigo-400 cursor-pointer transition-all group relative overflow-hidden"
+                            @click="selectedTariff = { id: null, name: 'Balansni To\'ldirish', price: 0 }">
+                            <div
+                                class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <i class="fas fa-wallet text-6xl text-white"></i>
+                            </div>
+                            <div class="relative z-10">
+                                <h4
+                                    class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors mb-1">
+                                    <i class="fas fa-plus-circle mr-2 text-indigo-400"></i>Balansni To'ldirish
+                                </h4>
+                                <p class="text-xs text-slate-400">Istalgan summaga hisobni to'ldirish</p>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-slate-500 uppercase tracking-widest text-center my-2">Yoki Tarif
+                            Tanlang</div>
+
                         <div v-for="t in tariffs" :key="t.id"
                             class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-blue-500 cursor-pointer transition-all group"
                             @click="selectTariff(t)">

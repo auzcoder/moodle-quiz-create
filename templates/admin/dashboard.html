@@ -348,8 +348,12 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Qo'shiladigan Summa (So'm)</label>
-                        <input v-model="processingDecision.amount" type="number"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-lg">
+                        <input v-model="displayAmount" @input="formatInputAmount" type="text"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-lg font-bold"
+                            placeholder="0">
+                        <div class="text-xs text-slate-500 mt-1 font-mono">
+                            Asl qiymat: {{ processingDecision.amount }}
+                        </div>
                     </div>
 
                     <div>
@@ -579,9 +583,29 @@
                     }
                 };
 
+                const displayAmount = ref('');
+
+                const formatInputAmount = (event) => {
+                    // Remove non-digits
+                    let val = event.target.value.replace(/\D/g, '');
+                    if (!val) {
+                        displayAmount.value = '';
+                        processingDecision.value.amount = 0;
+                        return;
+                    }
+                    // Parse integer
+                    const num = parseInt(val, 10);
+                    processingDecision.value.amount = num;
+                    // Re-format display
+                    displayAmount.value = new Intl.NumberFormat('ru-RU').format(num).replace(/,/g, ' ');
+                };
+
                 const openPaymentModal = (p) => {
                     processingPayment.value = p;
-                    processingDecision.value = { status: 'approved', amount: 0, note: '' };
+                    // Auto-fill price if tariff exists
+                    const initialAmount = p.tariff_price || 0;
+                    processingDecision.value = { status: 'approved', amount: initialAmount, note: '' };
+                    displayAmount.value = initialAmount > 0 ? new Intl.NumberFormat('ru-RU').format(initialAmount).replace(/,/g, ' ') : '';
                     showPaymentModal.value = true;
                 };
 
@@ -646,6 +670,7 @@
                     showUserModal, editingUser, openUserModal, saveUser,
                     showTariffModal, editingTariff, openTariffModal, saveTariff, calculatePrice,
                     showPaymentModal, processingPayment, processingDecision, openPaymentModal, submitDecision, isSubmitting,
+                    displayAmount, formatInputAmount,
                     payments, pendingPaymentsCount, getStatusClass, getStatusLabel, formatDate,
                     formatPhone, formatPrice, fetchTransactions, logout
                 };

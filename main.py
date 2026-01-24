@@ -1338,7 +1338,7 @@ async def get_payment_requests(current_user: dict = Depends(get_current_admin_us
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            SELECT p.*, u.full_name, u.email, t.name as tariff_name
+            SELECT p.*, u.full_name, u.email, t.name as tariff_name, t.price as tariff_price
             FROM payment_requests p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN tariffs t ON p.tariff_id = t.id
