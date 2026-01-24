@@ -2,11 +2,15 @@ import os
 import uuid
 import asyncio
 import shutil
-import sqlite3
 import datetime
 import logging
 import tempfile
 from typing import Optional
+
+# Postgres & Env
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
@@ -16,9 +20,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # --- Configuration ---
+load_dotenv()
+
 UPLOAD_DIR = "uploads"
 OUTPUT_DIR = "outputs"
-DB_FILE = "jobs.db"
+
+# Database Config
+DB_NAME = os.getenv("DB_NAME", "moodle_quiz_db")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -27,22 +39,44 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# --- Database Helper ---
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT
+        )
+        return conn
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        raise e
+
 # --- Database Setup ---
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS jobs (
-            id TEXT PRIMARY KEY,
-            filename TEXT,
-            status TEXT,
-            message TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS jobs (
+                id TEXT PRIMARY KEY,
+                filename TEXT,
+                status TEXT,
+                message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.commit()
+        cur.close()
+        conn.close()
+        logger.info("Database initialized successfully.")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
 
+# Initialize DB on startup
+# Note: In production, might want to check this or use migrations
 init_db()
 
 # --- App Setup ---
@@ -68,27 +102,41 @@ class JobStatus(BaseModel):
 
 # --- Helpers ---
 def update_job_status(job_id: str, status: str, message: str = ""):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("UPDATE jobs SET status = ?, message = ? WHERE id = ?", (status, message, job_id))
-    conn.commit()
-    conn.close()
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE jobs SET status = %s, message = %s WHERE id = %s", (status, message, job_id))
+        conn.commit()
+        cur.close()
+    except Exception as e:
+        logger.error(f"Error updating job status: {e}")
+    finally:
+        conn.close()
 
 def get_job(job_id: str):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT id, filename, status, message, created_at FROM jobs WHERE id = ?", (job_id,))
-    row = c.fetchone()
-    conn.close()
-    if row:
-        return {
-            "id": row[0],
-            "filename": row[1],
-            "status": row[2],
-            "message": row[3],
-            "created_at": row[4]
-        }
-    return None
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, filename, status, message, created_at FROM jobs WHERE id = %s", (job_id,))
+        row = cur.fetchone()
+        cur.close()
+        
+        if row:
+            # Row is a tuple (id, filename, status, message, created_at)
+            # created_at might be a datetime object returning from Postgres
+            return {
+                "id": row[0],
+                "filename": row[1],
+                "status": row[2],
+                "message": row[3],
+                "created_at": str(row[4]) # Convert datetime to string
+            }
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching job: {e}")
+        return None
+    finally:
+        conn.close()
 
 # --- Conversion Logic (Custom GIFT with Images) ---
 import base64
@@ -307,13 +355,20 @@ async def process_conversion(job_id: str, input_path: str, output_path: str, is_
 
 @app.get("/stats")
 async def get_stats():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    # Count only completed jobs
-    c.execute("SELECT COUNT(*) FROM jobs WHERE status = 'completed'")
-    count = c.fetchone()[0]
-    conn.close()
-    return {"count": count}
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        # Count only completed jobs
+        cur.execute("SELECT COUNT(*) FROM jobs WHERE status = 'completed'")
+        row = cur.fetchone()
+        count = row[0] if row else 0
+        cur.close()
+        return {"count": count}
+    except Exception as e:
+        logger.error(f"Error fetching stats: {e}")
+        return {"count": 0}
+    finally:
+        conn.close()
 
 @app.get("/")
 async def read_root():
@@ -337,12 +392,18 @@ async def upload_file(file: UploadFile = File(...), background_tasks: Background
         shutil.copyfileobj(file.file, buffer)
         
     # Create DB entry
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("INSERT INTO jobs (id, filename, status, created_at) VALUES (?, ?, ?, ?)", 
-              (job_id, file.filename, "queued", datetime.datetime.now()))
-    conn.commit()
-    conn.close()
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO jobs (id, filename, status, created_at) VALUES (%s, %s, %s, %s)", 
+                  (job_id, file.filename, "queued", datetime.datetime.now()))
+        conn.commit()
+        cur.close()
+    except Exception as e:
+        logger.error(f"Error creating job: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
     
     is_legacy = ext == ".doc"
     background_tasks.add_task(process_conversion, job_id, input_path, output_path, is_legacy)

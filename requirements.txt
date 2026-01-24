@@ -4,3 +4,5 @@ python-multipart
 beautifulsoup4
 aiofiles
 pywin32; sys_platform == 'win32'
+psycopg2-binary
+python-dotenv
