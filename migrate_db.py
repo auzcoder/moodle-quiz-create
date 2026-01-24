@@ -53,6 +53,23 @@ def migrate():
         except Exception as e:
              print(f"Error creating transactions table: {e}")
 
+        # Create Payment Requests Table
+        try:
+             cur.execute('''
+                CREATE TABLE IF NOT EXISTS payment_requests (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id),
+                    receipt_img TEXT NOT NULL,
+                    status TEXT DEFAULT 'pending',
+                    amount INTEGER DEFAULT 0,
+                    admin_note TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+             print("Created table 'payment_requests' (if not exists)")
+        except Exception as e:
+             print(f"Error creating payment_requests table: {e}")
+
         for cmd in commands:
             print(f"Executing: {cmd}")
             try:
