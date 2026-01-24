@@ -316,6 +316,7 @@
                 const activeTab = ref('users');
                 const users = ref([]);
                 const tariffs = ref([]);
+                const transactions = ref([]);
 
                 const showUserModal = ref(false);
                 const editingUser = ref({});
@@ -323,13 +324,13 @@
                 const showTariffModal = ref(false);
                 const editingTariff = ref({});
 
-                onMounted(async () => {
-                    const token = localStorage.getItem('access_token');
-                    if (!token) window.location.href = '/login';
-                    // Should verify role here or handle 403 from API
-
-                    await loadData();
-                });
+                const fetchTransactions = async () => {
+                    try {
+                        const token = localStorage.getItem('access_token');
+                        const res = await fetch('/api/admin/transactions', { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (res.ok) transactions.value = await res.json();
+                    } catch (e) { console.error(e); }
+                };
 
                 const loadData = async () => {
                     const token = localStorage.getItem('access_token');
@@ -344,17 +345,26 @@
                         if (resUsers.ok) users.value = await resUsers.json();
                         if (resTariffs.ok) tariffs.value = await resTariffs.json();
 
+                        // Fetch Tx
+                        fetchTransactions();
+
                     } catch (e) {
                         console.error("Error loading admin data", e);
                     }
                 };
+
+                onMounted(async () => {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) window.location.href = '/login';
+                    await loadData();
+                });
 
                 const getTariffName = (id) => {
                     const t = tariffs.value.find(x => x.id === id);
                     return t ? t.name : '-';
                 };
 
-                const openUserModal = (user) => { // Renamed from editUser to openUserModal
+                const openUserModal = (user) => {
                     editingUser.value = { ...user };
                     showUserModal.value = true;
                 };
@@ -369,14 +379,14 @@
                         });
                         if (res.ok) {
                             showUserModal.value = false;
-                            fetchUsers(); // Changed from loadData()
+                            loadData();
                         }
                     } catch (e) { console.error(e); }
                 };
 
                 const openTariffModal = (tariff = null) => {
                     if (tariff) editingTariff.value = { ...tariff };
-                    else editingTariff.value = { name: '', daily_limit: 5, duration_days: 30, price: 0, file_cost: 1000, is_active: true };
+                    else editingTariff.value = { name: '', daily_limit: 5, duration_days: 30, price: 0, file_cost: 0, is_active: true };
                     showTariffModal.value = true;
                 };
 
@@ -401,13 +411,11 @@
 
                 const formatPhone = (phone) => {
                     if (!phone) return '';
-                    // Remove non-digits
                     const cleaned = phone.replace(/\D/g, '');
-                    // Assuming 998XXXXXXXXX format (12 digits) or just XXXXXXXXX (9 digits)
                     let match;
-                    if (cleaned.length === 12) { // 998901234567
+                    if (cleaned.length === 12) {
                         match = cleaned.match(/^(\d{3})(\d{2})(\d{3})(\d{2})(\d{2})$/);
-                    } else if (cleaned.length === 9) { // 901234567
+                    } else if (cleaned.length === 9) {
                         match = ['998' + cleaned, '998', cleaned.substring(0, 2), cleaned.substring(2, 5), cleaned.substring(5, 7), cleaned.substring(7, 9)];
                     }
 
@@ -422,12 +430,18 @@
                     return new Intl.NumberFormat('uz-UZ').format(price) + ' so\'m';
                 };
 
+                const logout = () => {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                };
+
                 return {
-                    activeTab, users, tariffs,
+                    activeTab, users, tariffs, transactions,
                     getTariffName,
-                    showUserModal, editingUser, editUser, saveUser,
+                    showUserModal, editingUser, openUserModal, saveUser,
                     showTariffModal, editingTariff, openTariffModal, saveTariff,
-                    formatPhone, formatPrice
+                    formatPhone, formatPrice, fetchTransactions, logout
                 };
             }
         }).mount('#app');
