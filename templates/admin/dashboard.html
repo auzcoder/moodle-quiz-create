@@ -332,7 +332,7 @@
 
                 const openTariffModal = (tariff = null) => {
                     if (tariff) editingTariff.value = { ...tariff };
-                    else editingTariff.value = { name: '', daily_limit: 5, is_active: true };
+                    else editingTariff.value = { name: '', daily_limit: 5, duration_days: 30, is_active: true };
                     showTariffModal.value = true;
                 };
 

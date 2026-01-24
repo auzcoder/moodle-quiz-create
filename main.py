@@ -12,7 +12,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Header
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import Response
@@ -137,6 +137,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
                 daily_limit INTEGER NOT NULL DEFAULT 5,
+                duration_days INTEGER NOT NULL DEFAULT 30,
                 is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -165,6 +166,7 @@ def init_db():
                 is_verified BOOLEAN DEFAULT FALSE,
                 role INTEGER DEFAULT 2,
                 tariff_id INTEGER REFERENCES tariffs(id),
+                tariff_expires_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -173,6 +175,8 @@ def init_db():
         try:
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role INTEGER DEFAULT 2")
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_id INTEGER REFERENCES tariffs(id)")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS tariff_expires_at TIMESTAMP")
+            cur.execute("ALTER TABLE tariffs ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 30")
             cur.execute("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_id INTEGER")
         except Exception as e:
             logger.warning(f"Alter table warning: {e}")
@@ -191,7 +195,7 @@ def init_db():
         # Seed Default Tariff
         cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
         if not cur.fetchone():
-             cur.execute("INSERT INTO tariffs (name, daily_limit) VALUES ('Free', 5)")
+             cur.execute("INSERT INTO tariffs (name, daily_limit, duration_days) VALUES ('Free', 5, 30)")
         
         conn.commit()
         cur.close()
@@ -268,19 +272,26 @@ async def register(user: UserRegister):
         hashed_pw = get_password_hash(user.password)
         
         # Get Free Tariff
-        cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
+        cur.execute("SELECT id, duration_days FROM tariffs WHERE name = 'Free'")
         tariff_row = cur.fetchone()
-        tariff_id = tariff_row[0] if tariff_row else None
+        
+        tariff_id = None
+        expires_at = None
+        
+        if tariff_row:
+            tariff_id = tariff_row[0]
+            duration = tariff_row[1]
+            expires_at = datetime.datetime.now() + datetime.timedelta(days=duration)
         
         # Determine Role
         role = 1 if user.email == "auz.offical@gmail.com" else 2
         
         # Insert User (Unverified)
         cur.execute("""
-            INSERT INTO users (full_name, email, phone, password_hash, is_verified, role, tariff_id)
-            VALUES (%s, %s, %s, %s, FALSE, %s, %s)
+            INSERT INTO users (full_name, email, phone, password_hash, is_verified, role, tariff_id, tariff_expires_at)
+            VALUES (%s, %s, %s, %s, FALSE, %s, %s, %s)
             RETURNING id
-        """, (user.full_name, user.email, raw_phone, hashed_pw, role, tariff_id))
+        """, (user.full_name, user.email, raw_phone, hashed_pw, role, tariff_id, expires_at))
         
         user_id = cur.fetchone()[0]
         
@@ -831,11 +842,13 @@ class UserUpdate(BaseModel):
 class TariffCreate(BaseModel):
     name: str
     daily_limit: int
+    duration_days: int
     is_active: bool
 
 class TariffUpdate(BaseModel):
     name: str
     daily_limit: int
+    duration_days: int
     is_active: bool
 
 # --- Admin API Endpoints ---
@@ -859,7 +872,23 @@ async def update_user(user_id: int, data: UserUpdate):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("UPDATE users SET role = %s, tariff_id = %s WHERE id = %s", (data.role, data.tariff_id, user_id))
+        
+        # If tariff changed, update expiry
+        # 1. Get new tariff duration
+        cur.execute("SELECT duration_days FROM tariffs WHERE id = %s", (data.tariff_id,))
+        t_row = cur.fetchone()
+        
+        if t_row:
+            duration = t_row[0]
+            new_expires = datetime.datetime.now() + datetime.timedelta(days=duration)
+            cur.execute("""
+                UPDATE users 
+                SET role = %s, tariff_id = %s, tariff_expires_at = %s 
+                WHERE id = %s
+            """, (data.role, data.tariff_id, new_expires, user_id))
+        else:
+             cur.execute("UPDATE users SET role = %s, tariff_id = %s WHERE id = %s", (data.role, data.tariff_id, user_id))
+             
         conn.commit()
         return {"message": "User updated"}
     finally:
@@ -883,7 +912,8 @@ async def create_tariff(data: TariffCreate):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("INSERT INTO tariffs (name, daily_limit, is_active) VALUES (%s, %s, %s)", (data.name, data.daily_limit, data.is_active))
+        cur.execute("INSERT INTO tariffs (name, daily_limit, duration_days, is_active) VALUES (%s, %s, %s, %s)", 
+                  (data.name, data.daily_limit, data.duration_days, data.is_active))
         conn.commit()
         return {"message": "Tariff created"}
     finally:
@@ -894,37 +924,131 @@ async def update_tariff(tariff_id: int, data: TariffUpdate):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("UPDATE tariffs SET name = %s, daily_limit = %s, is_active = %s WHERE id = %s", (data.name, data.daily_limit, data.is_active, tariff_id))
+        cur.execute("UPDATE tariffs SET name = %s, daily_limit = %s, duration_days = %s, is_active = %s WHERE id = %s", 
+                  (data.name, data.daily_limit, data.duration_days, data.is_active, tariff_id))
         conn.commit()
         return {"message": "Tariff updated"}
     finally:
         conn.close()
 
-@app.post("/upload")
-async def upload_file(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    job_id = str(uuid.uuid4())
-    ext = os.path.splitext(file.filename)[1].lower()
-    
-    if ext not in [".doc", ".docx"]:
-        raise HTTPException(status_code=400, detail="Faqat .doc va .docx fayllar qo'llab-quvvatlanadi")
-    
-    input_filename = f"{job_id}{ext}"
-    input_path = os.path.join(UPLOAD_DIR, input_filename)
-    output_filename = f"{job_id}.txt"
-    output_path = os.path.join(OUTPUT_DIR, output_filename)
-    
-    # Save uploaded file
-    with open(input_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+@app.get("/api/me")
+async def get_me(authorization: Optional[str] = Header(None)):
+    if not authorization: return JSONResponse({}, status_code=401)
+    try:
+        _, token = authorization.split()
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
         
-    # Create DB entry
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # User Info + Tariff + Expiry
+        cur.execute("""
+            SELECT u.id, u.full_name, u.email, u.phone, u.role, u.tariff_expires_at, 
+                   t.name as tariff_name, t.daily_limit
+            FROM users u
+            LEFT JOIN tariffs t ON u.tariff_id = t.id
+            WHERE u.id = %s
+        """, (user_id,))
+        user = cur.fetchone()
+        
+        if not user: return JSONResponse({}, status_code=404)
+        
+        # Usage Stats
+        start_of_day = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        cur.execute("""
+            SELECT COUNT(*) as used FROM jobs 
+            WHERE user_id = %s AND created_at >= %s
+        """, (user_id, start_of_day))
+        usage = cur.fetchone()
+        
+        user['tariff_expires_at'] = str(user['tariff_expires_at'])
+        user['used_today'] = usage['used']
+        
+        conn.close()
+        return user
+        
+    except Exception:
+        return JSONResponse({}, status_code=401)
+
+from fastapi import Header
+
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...), 
+    background_tasks: BackgroundTasks = None,
+    authorization: Optional[str] = Header(None)
+):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Ro'yxatdan o'tmagansiz")
+    
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != 'bearer':
+            raise HTTPException(status_code=401, detail="Invalid auth scheme")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+    except Exception:
+         raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Check Limits
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("INSERT INTO jobs (id, filename, status, created_at) VALUES (%s, %s, %s, %s)", 
-                  (job_id, file.filename, "queued", datetime.datetime.now()))
+        
+        # Get User Tariff Info
+        cur.execute("""
+            SELECT u.tariff_expires_at, t.daily_limit 
+            FROM users u
+            JOIN tariffs t ON u.tariff_id = t.id
+            WHERE u.id = %s
+        """, (user_id,))
+        row = cur.fetchone()
+        
+        if not row:
+             raise HTTPException(status_code=400, detail="Foydalanuvchi topilmadi")
+             
+        expires_at, daily_limit = row
+        
+        # 1. Check Expiry
+        if expires_at and datetime.datetime.now() > expires_at:
+             raise HTTPException(status_code=403, detail="Tarif muddati tugagan. Iltimos tarifni yangilang.")
+             
+        # 2. Check Daily Usage
+        start_of_day = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        cur.execute("""
+            SELECT COUNT(*) FROM jobs 
+            WHERE user_id = %s AND created_at >= %s
+        """, (user_id, start_of_day))
+        
+        usage_count = cur.fetchone()[0]
+        
+        if usage_count >= daily_limit:
+             raise HTTPException(status_code=403, detail=f"Kunlik limit ({daily_limit} ta) tugadi.")
+             
+        # Proceed
+        job_id = str(uuid.uuid4())
+        ext = os.path.splitext(file.filename)[1].lower()
+        
+        if ext not in [".doc", ".docx"]:
+            raise HTTPException(status_code=400, detail="Faqat .doc va .docx fayllar qo'llab-quvvatlanadi")
+        
+        input_filename = f"{job_id}{ext}"
+        input_path = os.path.join(UPLOAD_DIR, input_filename)
+        output_filename = f"{job_id}.txt"
+        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        
+        # Save uploaded file
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        cur.execute("INSERT INTO jobs (id, filename, status, created_at, user_id) VALUES (%s, %s, %s, %s, %s)", 
+                  (job_id, file.filename, "queued", datetime.datetime.now(), user_id))
         conn.commit()
         cur.close()
+
+    except HTTPException as he:
+        raise he
     except Exception as e:
         logger.error(f"Error creating job: {e}")
         raise HTTPException(status_code=500, detail="Database error")
