@@ -96,8 +96,7 @@
                 <div class="md:col-span-3">
                     <div id="dropZone"
                         class="drop-zone w-full h-64 rounded-2xl flex flex-col items-center justify-center cursor-pointer relative group">
-                        <input type="file" id="fileInput"
-                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".doc,.docx">
+                        <input type="file" id="fileInput" class="hidden" accept=".doc,.docx">
                         <div class="text-center p-6 transition-transform group-hover:scale-105">
                             <div
                                 class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-blue-500/20 transition-all">
@@ -227,6 +226,7 @@
         }
 
         dropZone.addEventListener('drop', handleDrop, false);
+        dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFiles, false);
 
         function handleDrop(e) {
