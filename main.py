@@ -54,11 +54,84 @@ def get_db_connection():
         logger.error(f"Database connection failed: {e}")
         raise e
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import random
+from pydantic import BaseModel, EmailStr
+from passlib.context import CryptContext
+import jwt
+
+# ... (Previous imports)
+
+# --- Configuration ---
+load_dotenv()
+
+# ... (Previous Config)
+
+# Mail Config
+MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+MAIL_FROM = os.getenv("MAIL_FROM")
+MAIL_SERVER = os.getenv("MAIL_SERVER")
+MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
+SECRET_KEY = os.getenv("SECRET_KEY", "secret")
+ALGORITHM = "HS256"
+
+# Security Utils
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.datetime.utcnow() + datetime.timedelta(days=7) # 7 days session
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+# Email Utils
+def send_verification_email(to_email: str, code: str):
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = MAIL_FROM
+        msg['To'] = to_email
+        msg['Subject'] = "Tasdiqlash kodi / Verification Code"
+        
+        body = f"""
+        <html>
+            <body>
+                <h2>Moodle Quiz Creator</h2>
+                <p>Sizning tasdiqlash kodingiz / Your verification code:</p>
+                <h1 style="color: #3b82f6; letter-spacing: 5px;">{code}</h1>
+                <p>Ushbu kod 5 daqiqa davomida amal qiladi. / This code is valid for 5 minutes.</p>
+            </body>
+        </html>
+        """
+        msg.attach(MIMEText(body, 'html'))
+        
+        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT)
+        server.starttls()
+        server.login(MAIL_USERNAME, MAIL_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(MAIL_FROM, to_email, text)
+        server.quit()
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        return False
+
 # --- Database Setup ---
 def init_db():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        
+        # Jobs Table
         cur.execute('''
             CREATE TABLE IF NOT EXISTS jobs (
                 id TEXT PRIMARY KEY,
@@ -68,6 +141,30 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Users Table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                full_name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                phone TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                is_verified BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Verification Codes Table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS verification_codes (
+                email TEXT PRIMARY KEY,
+                code TEXT NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         conn.commit()
         cur.close()
         conn.close()
@@ -75,30 +172,193 @@ def init_db():
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
 
-# Initialize DB on startup
-# Note: In production, might want to check this or use migrations
-init_db()
-
-# --- App Setup ---
-app = FastAPI(title="Lux Doc Converter")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# ... (Rest of app setup)
 
 # --- Models ---
-class JobStatus(BaseModel):
-    id: str
-    filename: str
-    status: str
-    message: Optional[str] = None
-    created_at: str
+class UserRegister(BaseModel):
+    full_name: str
+    email: EmailStr
+    phone: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class VerifyCode(BaseModel):
+    email: EmailStr
+    code: str
+
+class ResendCode(BaseModel):
+    email: EmailStr
+
+# --- Auth Endpoints ---
+
+@app.post("/auth/register")
+async def register(user: UserRegister):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        # Check existing
+        cur.execute("SELECT id FROM users WHERE email = %s", (user.email,))
+        if cur.fetchone():
+            raise HTTPException(status_code=400, detail="Bu email allaqachon ro'yxatdan o'tgan")
+            
+        hashed_pw = get_password_hash(user.password)
+        
+        # Insert User (Unverified)
+        cur.execute("""
+            INSERT INTO users (full_name, email, phone, password_hash, is_verified)
+            VALUES (%s, %s, %s, %s, FALSE)
+            RETURNING id
+        """, (user.full_name, user.email, user.phone, hashed_pw))
+        
+        user_id = cur.fetchone()[0]
+        
+        # Generate Code
+        code = str(random.randint(1000, 9999))
+        expires = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        
+        # Upsert Code
+        cur.execute("""
+            INSERT INTO verification_codes (email, code, expires_at, created_at)
+            VALUES (%s, %s, %s, NOW())
+            ON CONFLICT (email) DO UPDATE 
+            SET code = EXCLUDED.code, expires_at = EXCLUDED.expires_at, created_at = NOW()
+        """, (user.email, code, expires))
+        
+        conn.commit()
+        cur.close()
+        
+        # Send Email
+        # Background task would be better, but for simplicity:
+        email_sent = send_verification_email(user.email, code)
+        if not email_sent:
+             logger.warning("Email sending failed")
+             # don't fail registration, user can resend
+        
+        return {"message": "Ro'yxatdan o'tish muvaffaqiyatli. Iltimos, emailingizni tekshiring va kodni kiriting."}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Register error: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        conn.close()
+
+@app.post("/auth/verify")
+async def verify(data: VerifyCode):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT code, expires_at FROM verification_codes WHERE email = %s", (data.email,))
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=400, detail="Kod topilmadi yoki muddati tugagan")
+            
+        code, expires = row
+        
+        if code != data.code:
+             raise HTTPException(status_code=400, detail="Noto'g'ri kod")
+             
+        if datetime.datetime.now() > expires:
+             raise HTTPException(status_code=400, detail="Kod muddati tugagan")
+             
+        # Mark user verified
+        cur.execute("UPDATE users SET is_verified = TRUE WHERE email = %s", (data.email,))
+        
+        # Delete code
+        cur.execute("DELETE FROM verification_codes WHERE email = %s", (data.email,))
+        
+        conn.commit()
+        cur.close()
+        
+        return {"message": "Email tasdiqlandi. Endi kirishingiz mumkin."}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Verify error: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        conn.close()
+
+@app.post("/auth/resend-code")
+async def resend_code(data: ResendCode):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        
+        # Check cooldown (2 mins)
+        cur.execute("SELECT created_at FROM verification_codes WHERE email = %s", (data.email,))
+        row = cur.fetchone()
+        
+        if row:
+            created_at = row[0]
+            if datetime.datetime.now() < created_at + datetime.timedelta(minutes=2):
+                 remaining = (created_at + datetime.timedelta(minutes=2) - datetime.datetime.now()).seconds
+                 raise HTTPException(status_code=400, detail=f"Iltimos, {remaining} soniya kuting")
+        
+        code = str(random.randint(1000, 9999))
+        expires = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        
+        cur.execute("""
+            INSERT INTO verification_codes (email, code, expires_at, created_at)
+            VALUES (%s, %s, %s, NOW())
+            ON CONFLICT (email) DO UPDATE 
+            SET code = EXCLUDED.code, expires_at = EXCLUDED.expires_at, created_at = NOW()
+        """, (data.email, code, expires))
+        
+        conn.commit()
+        cur.close()
+        
+        send_verification_email(data.email, code)
+        
+        return {"message": "Yangi kod yuborildi"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Resend error: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        conn.close()
+
+@app.post("/auth/login")
+async def login(user: UserLogin):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT id, full_name, password_hash, is_verified FROM users WHERE email = %s", (user.email,))
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=400, detail="Email yoki parol noto'g'ri")
+            
+        user_id, full_name, pw_hash, is_verified = row
+        
+        if not verify_password(user.password, pw_hash):
+             raise HTTPException(status_code=400, detail="Email yoki parol noto'g'ri")
+             
+        if not is_verified:
+             raise HTTPException(status_code=400, detail="Email tasdiqlanmagan. Iltimos avval tasdiqlang")
+             
+        # Generate Token
+        token = create_access_token({"sub": user.email, "user_id": user_id, "name": full_name})
+        
+        return {"access_token": token, "token_type": "bearer", "user": {"full_name": full_name, "email": user.email}}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        conn.close()
 
 # --- Helpers ---
 def update_job_status(job_id: str, status: str, message: str = ""):
