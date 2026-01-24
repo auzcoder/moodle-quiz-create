@@ -102,6 +102,15 @@
                         <span class="absolute -top-2 -right-6 rotate-12 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">Tez kunda...</span>
                     </div>
                 </div>
+
+                <!-- Donate Button -->
+                <div onclick="openDonateModal()" class="relative group cursor-pointer hover:scale-105 transition-transform">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200"></div>
+                    <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                        <i class="fas fa-heart text-pink-500 text-xl animate-pulse"></i>
+                        <span class="font-bold text-slate-100">Homiylik</span>
+                    </div>
+                </div>
             </div>
 
             <header class="text-center mb-12">
@@ -207,6 +216,60 @@
                 <i class="fas fa-file-circle-check text-blue-400 mr-2"></i>
                 Jami tayyorlangan fayllar: <span id="statsCount" class="font-bold text-white">...</span>
             </p>
+        </div>
+    </div>
+
+    <!-- Donate Modal -->
+    <div id="donateModal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeDonateModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+            <div class="relative bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl overflow-hidden p-8">
+                <!-- Close Button -->
+                <button onclick="closeDonateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-heart text-3xl text-pink-500"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Loyihani Qo'llab-quvvatlash</h3>
+                    <p class="text-slate-400 text-sm">Sizning yordamingiz bizga yangi imkoniyatlar yaratishda kuch bag'ishlaydi.</p>
+                </div>
+
+                <!-- Credit Card UI -->
+                <div class="relative w-full h-56 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 shadow-xl mb-6 overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                    <!-- Glass effect -->
+                    <div class="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
+                    <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-white/20 rounded-full blur-2xl"></div>
+                    
+                    <div class="relative h-full flex flex-col justify-between z-10">
+                        <div class="flex justify-between items-start">
+                             <div class="text-white/80 text-sm font-semibold tracking-widest">HUMO</div>
+                             <i class="fas fa-wifi text-white/60 rotate-90"></i>
+                        </div>
+                        
+                        <div class="text-center my-4">
+                            <div class="text-2xl md:text-3xl font-mono text-white tracking-wider drop-shadow-md">9860 0101 2365 1621</div>
+                        </div>
+                        
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <div class="text-xs text-white/60 uppercase tracking-widest mb-1">Hisob raqam egasi</div>
+                                <div class="text-white font-medium tracking-wide">ABDULHAFIZ DAVLATOV</div>
+                            </div>
+                            <i class="fab fa-cc-visa text-3xl text-white/80 opacity-0"></i> <!-- Spacer/Placeholder -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                     <p class="text-slate-500 text-xs italic">"Loyihani rivojlantirishga qo'shgan hissangiz uchun minnatdormiz!"</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -374,8 +437,26 @@
             }
         }
         
+        
         // Initial load
         updateStats();
+
+        // Modal Functions
+        function openDonateModal() {
+            const modal = document.getElementById('donateModal');
+            modal.classList.remove('hidden');
+            // Animate entry
+            modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+                modal.querySelector('.transform').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeDonateModal() {
+            const modal = document.getElementById('donateModal');
+            modal.classList.add('hidden');
+        }
     </script>
 </body>
 
