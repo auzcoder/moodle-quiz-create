@@ -7,6 +7,7 @@
     <title>Profil - Moodle Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -325,6 +326,81 @@
                 const paymentTxId = ref('');
 
                 const selectTariff = (t) => selectedTariff.value = t;
+
+                const showModal = (name) => {
+                    activeModal.value = name;
+                    selectedTariff.value = null;
+                    receiptFile.value = null;
+                    if (name === 'pricing') {
+                        paymentTxId.value = 'TX-' + Math.floor(100000 + Math.random() * 900000);
+                    }
+                };
+
+                const copyCard = () => {
+                    navigator.clipboard.writeText("8600123456789012");
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Nusxalandi!',
+                        text: 'Karta raqami nusxalandi',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                };
+
+                const toBase64 = file => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+
+                const submitPayment = async () => {
+                    if (!receiptFile.value) return;
+                    isSubmitting.value = true;
+
+                    try {
+                        const base64Image = await toBase64(receiptFile.value);
+                        const token = localStorage.getItem('access_token');
+
+                        const res = await fetch('/api/pay', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                transaction_id: paymentTxId.value,
+                                image: base64Image
+                            })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Muvaffaqiyatli!',
+                                text: data.message,
+                                confirmButtonColor: '#3b82f6'
+                            });
+                            activeModal.value = null;
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Xatolik!',
+                                text: data.detail || 'Noma\'lum xatolik',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Server Xatosi',
+                            text: 'Internet aloqasini tekshiring',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
 
                 onMounted(async () => {
                     const token = localStorage.getItem('access_token');
