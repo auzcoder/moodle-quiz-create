@@ -925,7 +925,9 @@ def format_hemis(questions):
         # Wrong
         # ====
         # Wrong
+        #
         # ++++
+        #
         
         block = []
         block.append(q['question'])
@@ -936,11 +938,14 @@ def format_hemis(questions):
             block.append(d)
             if i < len(q['distractors']) - 1:
                 block.append("====")
-            else:
-                pass # Last one followed by ++++
-                
+        
+        # Add separator + blank lines
+        block.append("")
         block.append("++++")
+        block.append("")
+        
         output_lines.append("\n".join(block))
+
     return "\n".join(output_lines)
 
 async def process_conversion(job_id: str, input_path: str, output_path: str, is_legacy: bool, output_format: str = 'gift'):
