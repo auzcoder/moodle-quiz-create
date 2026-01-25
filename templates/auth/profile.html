@@ -25,8 +25,7 @@
     </style>
 </head>
 
-<body
-    class="min-h-screen bg-[url('')] flex items-center justify-center p-6">
+<body class="min-h-screen bg-[url('')] flex items-center justify-center p-6">
 
     <div id="app" class="w-full max-w-5xl">
         <div class="glass-panel rounded-3xl p-8 relative overflow-hidden">
@@ -68,7 +67,8 @@
                         </div>
                     </div>
 
-                    <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy ma'lumotlar</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy
+                        ma'lumotlar</h3>
 
                     <div class="space-y-4">
                         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center space-x-4">
@@ -140,14 +140,16 @@
                                 {{ user.tariff_name || 'Free' }}
                             </div>
                             <div class="text-xs text-slate-400">
-                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at) }}</span>
+                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at)
+                                    }}</span>
                             </div>
                         </div>
 
                         <!-- Usage Bar -->
                         <div class="mb-2 flex justify-between text-sm">
-                            <span class="text-slate-400">Bugungi limit</span>
-                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0 }}</span>
+                            <span class="text-slate-400">Oylik limit</span>
+                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0
+                                }}</span>
                         </div>
                         <div class="w-full bg-slate-700 rounded-full h-2.5 mb-6 overflow-hidden">
                             <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
@@ -180,12 +182,14 @@
                                 <tbody class="divide-y divide-slate-700/50">
                                     <tr v-for="t in transactions.slice(0, 5)" :key="t.id">
                                         <td class="px-3 py-2 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
-                                        <td class="px-3 py-2 font-mono font-bold text-xs" :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
+                                        <td class="px-3 py-2 font-mono font-bold text-xs"
+                                            :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
                                             {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
                                         </td>
                                     </tr>
                                     <tr v-if="transactions.length === 0">
-                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q </td>
+                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -209,7 +213,8 @@
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
                         <i class="fas fa-crown text-amber-400"></i> Hisobni to'ldirish
                     </h3>
-                    <button @click="activeModal = null" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                    <button @click="activeModal = null"
+                        class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -221,20 +226,25 @@
                         <!-- Custom Topup Option -->
                         <div class="bg-gradient-to-r from-indigo-900/50 to-purple-900/50 rounded-xl p-4 border border-indigo-500/30 hover:border-indigo-400 cursor-pointer transition-all group relative overflow-hidden"
                             @click="selectedTariff = { id: null, name: 'Balansni to\'ldirish', price: 0 }">
-                            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <div
+                                class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <i class="fas fa-wallet text-6xl text-white"></i>
                             </div>
                             <div class="relative z-10">
-                                <h4 class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors mb-1">
+                                <h4
+                                    class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors mb-1">
                                     <i class="fas fa-plus-circle mr-2 text-indigo-400"></i>Balansni to'ldirish
                                 </h4>
                                 <p class="text-xs text-slate-400">Istalgan summaga hisobni to'ldirish</p>
                             </div>
                         </div>
 
-                        <div class="text-xs text-slate-500 uppercase tracking-widest text-center my-2">Yoki boshqa tarif tanlang</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-widest text-center my-2">Yoki boshqa tarif
+                            tanlang</div>
 
-                        <div v-for="t in tariffs" :key="t.id" class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-blue-500 cursor-pointer transition-all group" @click="selectTariff(t)">
+                        <div v-for="t in tariffs" :key="t.id"
+                            class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-blue-500 cursor-pointer transition-all group"
+                            @click="selectTariff(t)">
                             <div class="flex justify-between items-start mb-2">
                                 <h4 class="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
                                     {{ t.name }}
@@ -242,8 +252,9 @@
                                 <div class="text-xl font-bold text-blue-400">{{ formatPrice(t.price) }}</div>
                             </div>
                             <div class="text-sm text-slate-400 flex flex-wrap gap-4">
-                                <span><i class="fas fa-check text-green-400 mr-1"></i> {{ t.daily_limit }} ta/kun</span>
-                                <span><i class="fas fa-calendar text-orange-400 mr-1"></i> {{ t.duration_days }}kun</span>
+                                <span><i class="fas fa-check text-green-400 mr-1"></i> {{ t.daily_limit }} ta/oy</span>
+                                <span><i class="fas fa-calendar text-orange-400 mr-1"></i> {{ t.duration_days
+                                    }}kun</span>
                             </div>
                         </div>
                     </div>
@@ -258,7 +269,8 @@
                         <div class="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/20 text-center">
                             <div class="text-sm text-indigo-300 uppercase tracking-wider mb-1">Maqsad</div>
                             <div class="text-2xl font-bold text-white mb-1">{{ selectedTariff.name }}</div>
-                            <div v-if="selectedTariff.id" class="text-xl text-indigo-400 font-mono">{{ formatPrice(selectedTariff.price) }}</div>
+                            <div v-if="selectedTariff.id" class="text-xl text-indigo-400 font-mono">{{
+                                formatPrice(selectedTariff.price) }}</div>
                             <div v-else class="text-sm text-slate-400">
                                 <label class="block text-xs uppercase mb-1">To'lanayotgan summa</label>
                                 <input type="text" v-model="declaredAmount" @input="formatDeclaredAmount"
@@ -281,7 +293,8 @@
                                 <span v-if="!isSubmitting">Hozir sotib olish</span>
                                 <i v-else class="fas fa-spinner fa-spin"></i>
                             </button>
-                            <div class="text-center mt-2 text-xs text-indigo-300">Hisobingizdan {{ formatPrice(selectedTariff.price) }} yechiladi</div>
+                            <div class="text-center mt-2 text-xs text-indigo-300">Hisobingizdan {{
+                                formatPrice(selectedTariff.price) }} yechiladi</div>
                         </div>
 
                         <div class="space-y-4" v-else>
@@ -296,7 +309,8 @@
                                     <div class="text-xl font-mono font-bold text-white tracking-wider">
                                         9860 0101 2365 1621
                                     </div>
-                                    <button @click="copyCard" class="text-blue-400 hover:text-white transition-colors" title="Nusxalash">
+                                    <button @click="copyCard" class="text-blue-400 hover:text-white transition-colors"
+                                        title="Nusxalash">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -315,18 +329,22 @@
                             <!-- Upload Receipt -->
                             <div>
                                 <label class="block text-sm font-medium text-slate-300 mb-2">
-                                    To'lov chekini yuklash <span v-if="!selectedTariff.id" class="text-xs text-slate-500">(Summa chekda ko'rinishi shart)</span>
+                                    To'lov chekini yuklash <span v-if="!selectedTariff.id"
+                                        class="text-xs text-slate-500">(Summa chekda ko'rinishi shart)</span>
                                 </label>
                                 <div class="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center hover:border-blue-500 transition-colors cursor-pointer"
-                                    @click="$refs.receiptInput.click()" :class="{'border-green-500 bg-green-500/5': receiptFile}">
-                                    <input type="file" ref="receiptInput" class="hidden" accept="image/*" @change="handleReceiptSelect">
+                                    @click="$refs.receiptInput.click()"
+                                    :class="{'border-green-500 bg-green-500/5': receiptFile}">
+                                    <input type="file" ref="receiptInput" class="hidden" accept="image/*"
+                                        @change="handleReceiptSelect">
                                     <div v-if="!receiptFile">
                                         <i class="fas fa-camera text-2xl text-slate-500 mb-2"></i>
                                         <div class="text-sm text-slate-400">Rasm tanlash uchun bosing</div>
                                     </div>
                                     <div v-else class="flex items-center justify-center gap-2 text-green-400">
                                         <i class="fas fa-check-circle"></i>
-                                        <span class="text-sm font-bold truncate max-w-[200px]">{{ receiptFile.name }}</span>
+                                        <span class="text-sm font-bold truncate max-w-[200px]">{{ receiptFile.name
+                                            }}</span>
                                     </div>
                                 </div>
                             </div>
