@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Moodle Converter</title>
+    <title>Admin Panel - Test Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -59,17 +59,17 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] flex flex-col">
+<body class="min-h-screen bg-[url('')] flex flex-col">
 
     <div id="app" class="p-6 max-w-7xl mx-auto w-full">
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <h1 class="text-3xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
-                <i class="fas fa-user-shield mr-2"></i> Admin Panel
+                <i class="fas fa-user-shield mr-2"></i> Admin panel
             </h1>
             <div class="flex items-center gap-4">
                 <a href="/dashboard" class="text-slate-400 hover:text-white transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i> Asosiy Sahifa
+                    <i class="fas fa-arrow-left mr-2"></i> Asosiy sahifa
                 </a>
                 <div
                     class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
@@ -81,15 +81,15 @@
         <!-- Stats Overview -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="glass-panel p-6 rounded-2xl">
-                <div class="text-slate-400 text-sm mb-1">Jami Foydalanuvchilar</div>
+                <div class="text-slate-400 text-sm mb-1">Foydalanuvchilar</div>
                 <div class="text-3xl font-bold text-white">{{ users.length }}</div>
             </div>
             <div class="glass-panel p-6 rounded-2xl">
-                <div class="text-slate-400 text-sm mb-1">Jami Tariflar</div>
+                <div class="text-slate-400 text-sm mb-1">Tariflar</div>
                 <div class="text-3xl font-bold text-white">{{ tariffs.length }}</div>
             </div>
             <div class="glass-panel p-6 rounded-2xl">
-                <div class="text-slate-400 text-sm mb-1">Bugungi Yuklamalar</div>
+                <div class="text-slate-400 text-sm mb-1">Yuklamalar</div>
                 <div class="text-3xl font-bold text-white">...</div>
             </div>
         </div>
@@ -106,13 +106,10 @@
                 class="pb-2 px-4 font-medium transition-all">
                 Tariflar
             </button>
-            <button @click="activeTab = 'payments'"
-                :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'payments', 'text-slate-400 hover:text-white': activeTab !== 'payments'}"
+            <button @click="activeTab = 'payments'" :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'payments', 'text-slate-400 hover:text-white': activeTab !== 'payments'}"
                 class="pb-2 px-4 font-medium transition-all">
                 To'lovlar
-                <span v-if="pendingPaymentsCount > 0"
-                    class="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingPaymentsCount
-                    }}</span>
+                <span v-if="pendingPaymentsCount > 0" class="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingPaymentsCount }}</span>
             </button>
             <button @click="activeTab = 'transactions'"
                 :class="{'text-blue-400 border-b-2 border-blue-400': activeTab === 'transactions', 'text-slate-400 hover:text-white': activeTab !== 'transactions'}"
@@ -144,22 +141,24 @@
                             <td class="text-slate-400">{{ formatPhone(user.phone) }}</td>
                             <td class="text-amber-400 font-mono">{{ formatPrice(user.balance || 0) }}</td>
                             <td>
-                                <span v-if="user.role === 1"
-                                    class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Admin</span>
-                                <span v-else
-                                    class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">User</span>
+                                <span v-if="user.role === 1" class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">
+                                    Admin
+                                </span>
+                                <span v-else class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
+                                    User
+                                </span>
                             </td>
                             <td>
                                 <span class="text-white">{{ getTariffName(user.tariff_id) }}</span>
                             </td>
                             <td>
-                                <span v-if="user.is_verified" class="text-green-400"><i
-                                        class="fas fa-check-circle"></i></span>
+                                <span v-if="user.is_verified" class="text-green-400">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
                                 <span v-else class="text-slate-500"><i class="fas fa-clock"></i></span>
                             </td>
                             <td>
-                                <button @click="editUser(user)" class="text-blue-400 hover:text-white mx-1"
-                                    title="Tahrirlash">
+                                <button @click="editUser(user)" class="text-blue-400 hover:text-white mx-1" title="Tahrirlash">
                                     <i class="fas fa-edit"></i>
                                 </button>
                             </td>
@@ -193,25 +192,21 @@
                                 <span class="text-amber-400 font-bold text-sm">{{ p.tariff_name || 'Noma\'lum' }}</span>
                             </td>
                             <td>
-                                <a :href="'/uploads/' + p.receipt_img" target="_blank"
-                                    class="block w-16 h-12 bg-slate-800 rounded overflow-hidden relative group border border-slate-700">
+                                <a :href="'/uploads/' + p.receipt_img" target="_blank" class="block w-16 h-12 bg-slate-800 rounded overflow-hidden relative group border border-slate-700">
                                     <img :src="'/uploads/' + p.receipt_img" class="w-full h-full object-cover">
-                                    <div
-                                        class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
+                                    <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
                                         <i class="fas fa-eye text-white"></i>
                                     </div>
                                 </a>
                             </td>
                             <td>
-                                <span :class="getStatusClass(p.status)"
-                                    class="px-2 py-1 rounded text-xs font-bold border capitalize">
+                                <span :class="getStatusClass(p.status)" class="px-2 py-1 rounded text-xs font-bold border capitalize">
                                     {{ getStatusLabel(p.status) }}
                                 </span>
                             </td>
                             <td class="text-slate-400 text-xs">{{ formatDate(p.created_at) }}</td>
                             <td>
-                                <button v-if="p.status === 'pending'" @click="openPaymentModal(p)"
-                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors">
+                                <button v-if="p.status === 'pending'" @click="openPaymentModal(p)" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors">
                                     Ko'rib chiqish
                                 </button>
                                 <span v-else class="text-xs text-slate-500">Yakunlandi</span>
@@ -252,8 +247,7 @@
                                 {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
                             </td>
                             <td>
-                                <span class="px-2 py-1 rounded text-xs font-bold border capitalize"
-                                    :class="t.type === 'deposit' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'">
+                                <span class="px-2 py-1 rounded text-xs font-bold border capitalize" :class="t.type === 'deposit' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'">
                                     {{ t.type }}
                                 </span>
                             </td>
@@ -271,9 +265,8 @@
         <!-- TARIFFS TAB -->
         <div v-if="activeTab === 'tariffs'">
             <div class="flex justify-end mb-4">
-                <button @click="openTariffModal()"
-                    class="btn-primary px-4 py-2 rounded-lg text-white font-bold text-sm shadow-lg">
-                    <i class="fas fa-plus mr-2"></i> Yangi Tarif
+                <button @click="openTariffModal()" class="btn-primary px-4 py-2 rounded-lg text-white font-bold text-sm shadow-lg">
+                    <i class="fas fa-plus mr-2"></i> Yangi tarif
                 </button>
             </div>
 
@@ -298,10 +291,8 @@
                             <td class="text-slate-300">{{ tariff.daily_limit }} ta fayl</td>
                             <td class="text-slate-300">{{ tariff.duration_days }} kun</td>
                             <td>
-                                <span v-if="tariff.is_active"
-                                    class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">Active</span>
-                                <span v-else
-                                    class="bg-slate-700 text-slate-400 px-2 py-1 rounded text-xs font-bold">Inactive</span>
+                                <span v-if="tariff.is_active" class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">Faol</span>
+                                <span v-else class="bg-slate-700 text-slate-400 px-2 py-1 rounded text-xs font-bold">Nofaol</span>
                             </td>
                             <td>
                                 <button @click="openTariffModal(tariff)" class="text-blue-400 hover:text-white mx-1">
@@ -315,60 +306,51 @@
         </div>
 
         <!-- Edit User Modal -->
-        <div v-if="showUserModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
-            @click.self="showUserModal = false">
+        <div v-if="showUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm" @click.self="showUserModal = false">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-md">
-                <h3 class="text-xl font-bold text-white mb-4">Foydalanuvchini Tahrirlash</h3>
+                <h3 class="text-xl font-bold text-white mb-4">Foydalanuvchini tahrirlash</h3>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">To'liq Ism</label>
-                        <input v-model="editingUser.full_name" type="text"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <label class="block text-slate-400 text-xs uppercase mb-1">F.I.SH</label>
+                        <input v-model="editingUser.full_name" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Email</label>
-                        <input v-model="editingUser.email" type="email"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <input v-model="editingUser.email" type="email" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Telefon</label>
-                        <input v-model="editingUser.phone" type="text"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <input v-model="editingUser.phone" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Role</label>
-                        <select v-model="editingUser.role"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <select v-model="editingUser.role" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                             <option :value="1">Superadmin</option>
                             <option :value="2">User</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Tarif</label>
-                        <select v-model="editingUser.tariff_id"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
-                            <option v-for="t in tariffs" :key="t.id" :value="t.id">{{ t.name }} ({{ t.daily_limit }})
-                            </option>
+                        <select v-model="editingUser.tariff_id" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                            <option v-for="t in tariffs" :key="t.id" :value="t.id">{{ t.name }} ({{ t.daily_limit }})</option>
                         </select>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 mt-6">
-                    <button @click="showUserModal = false"
-                        class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Bekor
-                        qilish</button>
-                    <button @click="saveUser"
-                        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold">Saqlash</button>
+                    <button @click="showUserModal = false" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">
+                        Bekor qilish
+                    </button>
+                    <button @click="saveUser" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold">
+                        Saqlash
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Payment Decision Modal -->
-        <div v-if="showPaymentModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
-            @click.self="showPaymentModal = false">
+        <div v-if="showPaymentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm" @click.self="showPaymentModal = false">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-lg">
-                <h3 class="text-xl font-bold text-white mb-4">To'lovni Tasdiqlash</h3>
+                <h3 class="text-xl font-bold text-white mb-4">To'lovni tasdiqlash</h3>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
@@ -383,32 +365,27 @@
                 </div>
 
                 <div class="mb-4">
-                    <div class="text-xs text-slate-400 uppercase mb-1">Chek Rasmi</div>
-                    <img :src="'/uploads/' + processingPayment.receipt_img"
-                        class="w-full h-48 object-contain bg-slate-900 rounded-lg border border-slate-700">
+                    <div class="text-xs text-slate-400 uppercase mb-1">Chek rasmi</div>
+                    <img :src="'/uploads/' + processingPayment.receipt_img" class="w-full h-48 object-contain bg-slate-900 rounded-lg border border-slate-700">
 
                     <div v-if="processingPayment.declared_amount" class="mt-2 text-center">
                         <div class="text-xs text-slate-400 uppercase">Foydalanuvchi kiritgan summa:</div>
-                        <div class="text-xl font-mono text-amber-400 font-bold">{{
-                            formatPrice(processingPayment.declared_amount) }}</div>
+                        <div class="text-xl font-mono text-amber-400 font-bold">{{ formatPrice(processingPayment.declared_amount) }}</div>
                     </div>
                 </div>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">Qo'shiladigan Summa (So'm)</label>
-                        <input v-model="displayAmount" @input="formatInputAmount" type="text"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-lg font-bold"
-                            placeholder="0">
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Qo'shiladigan summa (So'm)</label>
+                        <input v-model="displayAmount" @input="formatInputAmount" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono text-lg font-bold" placeholder="0">
                         <div class="text-xs text-slate-500 mt-1 font-mono">
                             Asl qiymat: {{ processingDecision.amount }}
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">Izoh (Admin Note)</label>
-                        <textarea v-model="processingDecision.note"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white h-20"></textarea>
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Izoh (Admin uchun)</label>
+                        <textarea v-model="processingDecision.note" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white h-20"></textarea>
                     </div>
 
                     <div>
@@ -429,11 +406,10 @@
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">
-                    <button @click="showPaymentModal = false"
-                        class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Bekor
-                        qilish</button>
-                    <button @click="submitDecision"
-                        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold flex items-center gap-2">
+                    <button @click="showPaymentModal = false" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">
+                        Bekor qilish
+                    </button>
+                    <button @click="submitDecision" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold flex items-center gap-2">
                         <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
                         <span>Tasdiqlash</span>
                     </button>
@@ -442,50 +418,40 @@
         </div>
 
         <!-- Tariff Modal -->
-        <div v-if="showTariffModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
-            @click.self="showTariffModal = false">
+        <div v-if="showTariffModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm" @click.self="showTariffModal = false">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 w-full max-w-md">
-                <h3 class="text-xl font-bold text-white mb-4">{{ editingTariff.id ? 'Tarifni Tahrirlash' : 'Yangi Tarif'
-                    }}</h3>
+                <h3 class="text-xl font-bold text-white mb-4">{{ editingTariff.id ? 'Tarifni tahrirlash' : 'Yangi tarif' }}</h3>
                 <div class="space-y-4">
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Nomi</label>
-                        <input v-model="editingTariff.name" type="text"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <input v-model="editingTariff.name" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">Oylik Limit</label>
-                        <input v-model="editingTariff.daily_limit" type="number" @input="calculatePrice"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Oylik limit</label>
+                        <input v-model="editingTariff.daily_limit" type="number" @input="calculatePrice" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">1 ta Fayl Narxi</label>
-                        <input v-model="editingTariff.file_cost" type="number" @input="calculatePrice"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <label class="block text-slate-400 text-xs uppercase mb-1">1 ta Fayl narxi</label>
+                        <input v-model="editingTariff.file_cost" type="number" @input="calculatePrice" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase mb-1">Tarif Narxi (Limit * Narx)</label>
-                        <input v-model="editingTariff.price" type="number" readonly
-                            class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-amber-400 font-bold cursor-not-allowed">
+                        <label class="block text-slate-400 text-xs uppercase mb-1">Tarif narxi (Limit * Narx)</label>
+                        <input v-model="editingTariff.price" type="number" readonly class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-amber-400 font-bold cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-slate-400 text-xs uppercase mb-1">Muddat (Kun)</label>
-                        <input v-model="editingTariff.duration_days" type="number"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+                        <input v-model="editingTariff.duration_days" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
                     </div>
                     <div class="flex items-center gap-2">
-                        <input v-model="editingTariff.is_active" type="checkbox" id="isActive"
-                            class="w-4 h-4 rounded bg-slate-900 border-slate-700">
-                        <label for="isActive" class="text-slate-300 text-sm">Aktiv</label>
+                        <input v-model="editingTariff.is_active" type="checkbox" id="isActive" class="w-4 h-4 rounded bg-slate-900 border-slate-700">
+                        <label for="isActive" class="text-slate-300 text-sm">Faol</label>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 mt-6">
-                    <button @click="showTariffModal = false"
-                        class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">Bekor
-                        qilish</button>
-                    <button @click="saveTariff"
-                        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold">Saqlash</button>
+                    <button @click="showTariffModal = false" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600">
+                        Bekor qilish
+                    </button>
+                    <button @click="saveTariff" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-bold">Saqlash</button>
                 </div>
             </div>
         </div>
