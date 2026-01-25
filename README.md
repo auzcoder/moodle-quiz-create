@@ -1,121 +1,85 @@
-# Moodle Test Konvertori (GIFT Format)
+# 🚀 Moodle & Hemis Test Konvertori
 
-**Moodle Test Konvertori** - bu Microsoft Word (.docx, .doc) fayllaridagi jadval ko'rinishidagi testlarni Moodle tizimi tushunadigan **GIFT** formatiga (.txt) o'tkazib beruvchi zamonaviy veb-dastur.
+Word (.docx/.doc) formatidagi test savollarini avtomatik ravishda **Moodle (GIFT)** va **Hemis** tizimlari formatiga o'tkazuvchi zamonaviy veb-platforma.
 
-Dastur **Windows**, **Linux** va **macOS** operatsion tizimlarida ishlaydi.
+## ✨ Imkoniyatlar
 
----
+### 👤 Foydalanuvchilar uchun:
+*   **Zamonaviy Dashboard:** Chiroyli va qulay boshqaruv paneli.
+*   **Formatlar:** Moodle (GIFT) va Hemis formatlarini qo'llab-quvvatlash.
+*   **Avtomatik Konvertatsiya:** Word fayllarni bir zumda test formatiga o'tkazish.
+*   **Rasmlar bilan ishlash:** Test ichidagi rasmlar avtomatik saqlanadi.
+*   **Checklar:** To'lov chekini yuklash va admin tasdiqini kutish tizimi.
+*   **Statistika:** Foydalanuvchi balansi va kunlik limitlar nazorati.
+*   **Responsive:** Mobil va kompyuterda qulay ishlash.
 
-## 📋 Talablar (Prerequisites)
-
-Dastur ishlashi uchun kompyuteringizda quyidagilar bo'lishi kerak:
-1.  **Python 3.8** yoki undan yuqori versiyasi.
-2.  Ofis dasturi:
-    *   **Windows uchun**: Microsoft Word o'rnatilgan bo'lishi shart.
-    *   **Linux / macOS uchun**: LibreOffice o'rnatilgan bo'lishi shart.
-
----
-
-## 🚀 O'rnatish va Ishga tushirish (Installation)
-
-### 🪟 Windows Foydalanuvchilari uchun
-
-### 🪟 Windows Foydalanuvchilari uchun
-
-**1-usul: Buyruqlar qatori orqali (Qo'lda)**
-Bu usulda siz har bir qadamni o'zingiz bajarasiz. Bu jarayonni tushunish uchun foydali.
-
-1.  **Virtual muhit (venv) yaratish**:
-    Loyiha papkasida buyruqlar qatorini (CMD) ochib, quyidagini yozing:
-    ```cmd
-    python -m venv venv
-    ```
-2.  **Virtual muhitni faollashtirish**:
-    ```cmd
-    venv\Scripts\activate.bat
-    ```
-    *(Agar muvaffaqiyatli bo'lsa, qator boshida `(venv)` yozuvi paydo bo'ladi)*
-
-3.  **Kutubxonalarni o'rnatish**:
-    ```cmd
-    pip install -r requirements.txt
-    ```
-4.  **Dasturni ishga tushiring**:
-    ```cmd
-    uvicorn main:app --reload
-    ```
-5.  **Natija**: Brauzerni ochib [http://127.0.0.1:8000](http://127.0.0.1:8000) manziliga kiring.
-
-**2-usul: Avtomatik skript (.bat fayl)**
-Bu eng oson va tez usul.
-1.  Loyiha papkasidagi **`run_app.bat`** faylini toping.
-2.  Uni sichqoncha bilan ikki marta bosing.
-3.  U o'zi avtomatik virtual muhit yaratadi, kerakli narsalarni o'rnatadi va dasturni ishga tushiradi.
+### 🛡 Admin Panel:
+*   Foydalanuvchilarni boshqarish.
+*   Tariflarni yaratish va o'zgartirish.
+*   To'lovlarni tasdiqlash yoki rad etish.
+*   Umumiy statistika.
 
 ---
 
-### 🐧 Linux (Ubuntu/Debian/CentOS)
+## 🛠 Texnologiyalar
 
-1.  **LibreOffice**ni o'rnating (agar yo'q bo'lsa):
-    ```bash
-    sudo apt update
-    sudo apt install libreoffice python3-venv 
-    ```
-2.  Loyiha papkasiga kiring va virtual muhit yarating:
-    ```bash
-    python3 -m venv venv
-    ```
-3.  Virtual muhitni faollashtiring:
-    ```bash
-    source venv/bin/activate
-    ```
-4.  Kutubxonalarni o'rnating:
-    ```bash
-    pip install -r requirements.txt
-    ```
-    *(Eslatma: Windowsga oid `pywin32` xatolik bersa, e'tibor bermang, Linuxda u ishlatilmaydi)*
-5.  Dasturni ishga tushiring:
-    ```bash
-    uvicorn main:app --host 0.0.0.0 --port 8000
-    ```
+Loyiha quyidagi zamonaviy texnologiyalar asosida qurilgan:
+*   **Backend:** Python (FastAPI), PostgreSQL
+*   **Frontend:** HTML5, TailwindCSS, Vue.js 3
+*   **Fayl Tizimi:** python-docx, win32com (Windows), LibreOffice (Linux/Mac)
 
 ---
 
-### 🍎 macOS
+## 📥 O'rnatish va Ishga tushirish
 
-1.  **LibreOffice**ni o'rnating:
-    [LibreOffice saytidan yuklab oling](https://www.libreoffice.org/download/download-libreoffice/) yoki Homebrew orqali:
-    ```bash
-    brew install --cask libreoffice
-    ```
-2.  Terminal orqali loyiha papkasiga o'ting va virtual muhit yarating:
-    ```bash
-    python3 -m venv venv
-    ```
-3.  Virtual muhitni faollashtiring:
-    ```bash
-    source venv/bin/activate
-    ```
-4.  Kutubxonalarni o'rnating:
-    ```bash
-    pip install -r requirements.txt
-    ```
-5.  Dasturni ishga tushiring:
-    ```bash
-    uvicorn main:app --reload
-    ```
+### 1. Talablar
+*   Python 3.8+
+*   PostgreSQL
+*   Microsoft Word (Windows uchun) yoki LibreOffice (Linux/Mac uchun)
+
+### 2. O'rnatish
+```bash
+# Loyihani yuklab olish
+git clone https://github.com/auzcoder/moodle-quiz-create.git
+cd moodle-quiz-create
+
+# Virtual muhit yaratish
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Kutubxonalarni o'rnatish
+pip install -r requirements.txt
+```
+
+### 3. Bazani sozlash (.env)
+Loyiha papkasida `.env` faylini yarating va quyidagi ma'lumotlarni kiriting:
+```env
+DB_NAME=moodle_db
+DB_USER=postgres
+DB_PASSWORD=sizning_parolingiz
+DB_HOST=localhost
+DB_PORT=5432
+SECRET_KEY=maxfiy_kalit
+```
+
+### 4. Ishga tushirish
+```bash
+uvicorn main:app --reload --port 8005
+```
+Brauzerda: `http://localhost:8005` (yoki sozlangan portda)
 
 ---
 
-## 🛠 Ishlash Tamoyili
+## 📞 Aloqa va Yordam
 
-1.  **Windowsda**: Dastur `win32com` orqali orqa fonda **Microsoft Word**ni ochadi va faylni HTML formatga o'giradi.
-2.  **Linux/macOSda**: Dastur `subprocess` orqali **LibreOffice**ni chaqiradi (`--headless` rejimda) va faylni HTMLga o'giradi.
-3.  Hosil bo'lgan HTML fayl `BeautifulSoup` yordamida tahlil qilinadi:
-    *   Rasmlar **Base64** formatiga o'tkazilib, matn ichiga joylanadi.
-    *   Test savollari jadvaldan ajratib olinadi (1-ustun tashlab ketiladi).
-    *   Maxsus belgilar (`, ~, =, {, })` Moodle GIFT talabiga moslab "escape" qilinadi.
-4.  Natija `.txt` fayl ko'rinishida yuklab beriladi.
+Loyihada muammo chiqsa yoki savollaringiz bo'lsa, biz bilan bog'laning:
 
-## 📝 Mualliflik
-Ushbu dastur Moodle tizimi uchun testlarni tez va oson tayyorlash maqsadida yaratildi.
+*   **Telefon:** [+998 90 696 00 10](tel:+998906960010)
+*   **Telegram:** [@auzcoder](https://t.me/auzcoder)
+*   **Email:** [auz.offical@gmail.com](mailto:auz.offical@gmail.com)
+
+---
+© 2026 TestConverter. Barcha huquqlar himoyalangan.
