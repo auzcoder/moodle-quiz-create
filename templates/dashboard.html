@@ -200,6 +200,18 @@
                                 <span class="font-bold text-slate-100">Namuna</span>
                             </div>
                         </div>
+
+                        <!-- Support Button -->
+                        <div @click="showModal('support')"
+                            class="relative group cursor-pointer hover:scale-105 transition-transform">
+                            <div
+                                class="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-cyan-500 rounded-xl opacity-70 blur group-hover:opacity-100 transition duration-200">
+                            </div>
+                            <div class="relative px-6 py-3 bg-slate-900 rounded-xl flex items-center space-x-3">
+                                <i class="fas fa-headset text-green-400 text-xl"></i>
+                                <span class="font-bold text-slate-100">Yordam</span>
+                            </div>
+                        </div>
                     </div>
 
                     <header class="text-center mb-12">
@@ -409,6 +421,69 @@
                     <div class="md:w-2/3 bg-slate-900 rounded-xl overflow-hidden border border-slate-700">
                         <img src="/static/example.png" alt="Example" class="w-full h-auto object-contain">
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Modal -->
+        <div v-if="activeModal === 'support'"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
+            @click.self="activeModal = null">
+            <div class="bg-slate-800 rounded-3xl border border-slate-700 shadow-2xl p-8 max-w-md w-full relative">
+                <button @click="activeModal = null" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+                <div class="text-center mb-6">
+                    <i class="fas fa-headset text-4xl text-green-400 mb-3"></i>
+                    <h3 class="text-2xl font-bold text-white">Yordam kerakmi?</h3>
+                    <p class="text-slate-400 text-sm mt-2">Biz bilan bog'laning!</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Phone -->
+                    <a href="tel:+998906960010"
+                        class="flex items-center gap-4 p-4 bg-slate-700/50 rounded-xl border border-slate-600 hover:border-green-500 transition-colors group">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                            <i class="fas fa-phone text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Telefon</div>
+                            <div class="text-white font-bold group-hover:text-green-400 transition-colors">+998 90 696
+                                00 10</div>
+                        </div>
+                    </a>
+
+                    <!-- Email -->
+                    <a href="mailto:auz.offical@gmail.com"
+                        class="flex items-center gap-4 p-4 bg-slate-700/50 rounded-xl border border-slate-600 hover:border-blue-500 transition-colors group">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                            <i class="fas fa-envelope text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Email</div>
+                            <div class="text-white font-bold group-hover:text-blue-400 transition-colors">
+                                auz.offical@gmail.com</div>
+                        </div>
+                    </a>
+
+                    <!-- Telegram -->
+                    <a href="https://t.me/auzcoder" target="_blank"
+                        class="flex items-center gap-4 p-4 bg-slate-700/50 rounded-xl border border-slate-600 hover:border-sky-500 transition-colors group">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
+                            <i class="fab fa-telegram text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Telegram</div>
+                            <div class="text-white font-bold group-hover:text-sky-400 transition-colors">@auzcoder</div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="text-center text-slate-500 text-xs mt-6 italic">
+                    Savollaringizga tez javob beramiz!
                 </div>
             </div>
         </div>
