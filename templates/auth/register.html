@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ro'yxatdan o'tish - Test Converter</title>
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -34,14 +35,14 @@
     </style>
 </head>
 
-<body
-    class="min-h-screen flex items-center justify-center bg-[url('')]">
+<body class="min-h-screen flex items-center justify-center bg-[url('')]">
 
     <div id="app" class="w-full max-w-md p-6">
         <div class="glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden">
             <!-- Header -->
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
+                <h1
+                    class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
                     Test Converter
                 </h1>
                 <p class="text-slate-400 text-sm" v-if="step === 'register'">Yangi hisob yaratish</p>
@@ -97,17 +98,20 @@
                     </div>
                 </div>
 
-                <button type="submit" :disabled="loading" class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
+                <button type="submit" :disabled="loading"
+                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
                     <span v-if="!loading">Ro'yxatdan o'tish</span>
                     <i v-else class="fas fa-spinner fa-spin"></i>
                 </button>
 
-                <div v-if="error" class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                <div v-if="error"
+                    class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
                     {{ error }}
                 </div>
 
                 <div class="text-center mt-4 text-sm text-slate-400">
-                    Hisobingiz bormi? <a href="/login" class="text-blue-400 hover:text-blue-300 font-semibold">Kirish</a>
+                    Hisobingiz bormi? <a href="/login"
+                        class="text-blue-400 hover:text-blue-300 font-semibold">Kirish</a>
                 </div>
             </form>
 
@@ -117,26 +121,34 @@
                     <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
                 </div>
                 <h3 class="text-xl font-bold text-white mb-2">Emailni Tasdiqlash</h3>
-                <p class="text-slate-400 text-sm mb-6">Biz <span class="text-white font-semibold">{{ form.email }}</span> manziliga kod yubordik.</p>
+                <p class="text-slate-400 text-sm mb-6">Biz <span class="text-white font-semibold">{{ form.email
+                        }}</span> manziliga kod yubordik.</p>
 
                 <div class="flex justify-center gap-2 mb-6">
-                    <input v-model="verifyCode" maxlength="4" class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-2xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors" placeholder="0000">
+                    <input v-model="verifyCode" maxlength="4"
+                        class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-2xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
+                        placeholder="0000">
                 </div>
 
-                <button @click="handleVerify" :disabled="loading" class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg mb-4 flex justify-center items-center">
+                <button @click="handleVerify" :disabled="loading"
+                    class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg mb-4 flex justify-center items-center">
                     <span v-if="!loading">Tasdiqlash</span>
                     <i v-else class="fas fa-spinner fa-spin"></i>
                 </button>
 
-                <button @click="resendCode" :disabled="cooldown > 0" class="text-sm text-slate-400 hover:text-white transition-colors" :class="{'opacity-50': cooldown > 0}">
+                <button @click="resendCode" :disabled="cooldown > 0"
+                    class="text-sm text-slate-400 hover:text-white transition-colors"
+                    :class="{'opacity-50': cooldown > 0}">
                     Kodni qayta yuborish <span v-if="cooldown > 0">({{ cooldown }}s)</span>
                 </button>
 
                 <div class="mt-4">
-                    <a href="#" @click.prevent="step = 'register'" class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
+                    <a href="#" @click.prevent="step = 'register'"
+                        class="text-xs text-slate-500 hover:text-slate-400">Orqaga qaytish</a>
                 </div>
 
-                <div v-if="error" class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                <div v-if="error"
+                    class="text-center text-red-400 text-sm mt-2 font-medium bg-red-500/10 p-2 rounded-lg border border-red-500/20">
                     {{ error }}
                 </div>
             </div>
