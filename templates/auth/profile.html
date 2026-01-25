@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil - Moodle Converter</title>
+    <title>Profil - Test Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -58,7 +58,7 @@
                 <!-- Personal Info -->
                 <div class="space-y-6">
                     <div class="bg-indigo-500/10 rounded-2xl p-6 border border-indigo-500/20 mb-6">
-                        <div class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Mening Hisobim</div>
+                        <div class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Mening hisobim</div>
                         <div class="flex items-end justify-between">
                             <div class="text-2xl font-bold text-white">{{ formatPrice(user.balance || 0) }}</div>
                             <button @click="showModal('pricing')"
@@ -68,8 +68,7 @@
                         </div>
                     </div>
 
-                    <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy
-                        Ma'lumotlar</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy ma'lumotlar</h3>
 
                     <div class="space-y-4">
                         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center space-x-4">
@@ -132,7 +131,7 @@
                     <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
                         <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                             <i class="fas fa-crown text-amber-400"></i>
-                            Tarif Rejasi
+                            Tarif rejasi
                         </h3>
 
                         <div class="mb-6 text-center">
@@ -141,16 +140,14 @@
                                 {{ user.tariff_name || 'Free' }}
                             </div>
                             <div class="text-xs text-slate-400">
-                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at)
-                                    }}</span>
+                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at) }}</span>
                             </div>
                         </div>
 
                         <!-- Usage Bar -->
                         <div class="mb-2 flex justify-between text-sm">
-                            <span class="text-slate-400">Bugungi Limit</span>
-                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0
-                                }}</span>
+                            <span class="text-slate-400">Bugungi limit</span>
+                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0 }}</span>
                         </div>
                         <div class="w-full bg-slate-700 rounded-full h-2.5 mb-6 overflow-hidden">
                             <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
@@ -161,7 +158,7 @@
                             <button
                                 class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm"
                                 @click="showModal('pricing')">
-                                Tarifni Yangilash
+                                Tarifni yangilash
                             </button>
                         </div>
                     </div>
@@ -170,7 +167,7 @@
                     <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
                         <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                             <i class="fas fa-history text-blue-400"></i>
-                            Oxirgi O'tkazmalar
+                            Oxirgi o'tkazmalar tarixi
                         </h3>
                         <div class="overflow-hidden rounded-xl border border-slate-700/50">
                             <table class="w-full text-left text-sm">
@@ -183,14 +180,12 @@
                                 <tbody class="divide-y divide-slate-700/50">
                                     <tr v-for="t in transactions.slice(0, 5)" :key="t.id">
                                         <td class="px-3 py-2 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
-                                        <td class="px-3 py-2 font-mono font-bold text-xs"
-                                            :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
+                                        <td class="px-3 py-2 font-mono font-bold text-xs" :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
                                             {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
                                         </td>
                                     </tr>
                                     <tr v-if="transactions.length === 0">
-                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q
-                                        </td>
+                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -214,8 +209,7 @@
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
                         <i class="fas fa-crown text-amber-400"></i> Hisobni to'ldirish
                     </h3>
-                    <button @click="activeModal = null"
-                        class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                    <button @click="activeModal = null" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -226,26 +220,21 @@
                     <div v-if="!selectedTariff" class="space-y-4">
                         <!-- Custom Topup Option -->
                         <div class="bg-gradient-to-r from-indigo-900/50 to-purple-900/50 rounded-xl p-4 border border-indigo-500/30 hover:border-indigo-400 cursor-pointer transition-all group relative overflow-hidden"
-                            @click="selectedTariff = { id: null, name: 'Balansni To\'ldirish', price: 0 }">
-                            <div
-                                class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            @click="selectedTariff = { id: null, name: 'Balansni to\'ldirish', price: 0 }">
+                            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <i class="fas fa-wallet text-6xl text-white"></i>
                             </div>
                             <div class="relative z-10">
-                                <h4
-                                    class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors mb-1">
-                                    <i class="fas fa-plus-circle mr-2 text-indigo-400"></i>Balansni To'ldirish
+                                <h4 class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors mb-1">
+                                    <i class="fas fa-plus-circle mr-2 text-indigo-400"></i>Balansni to'ldirish
                                 </h4>
                                 <p class="text-xs text-slate-400">Istalgan summaga hisobni to'ldirish</p>
                             </div>
                         </div>
 
-                        <div class="text-xs text-slate-500 uppercase tracking-widest text-center my-2">Yoki Tarif
-                            Tanlang</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-widest text-center my-2">Yoki boshqa tarif tanlang</div>
 
-                        <div v-for="t in tariffs" :key="t.id"
-                            class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-blue-500 cursor-pointer transition-all group"
-                            @click="selectTariff(t)">
+                        <div v-for="t in tariffs" :key="t.id" class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-blue-500 cursor-pointer transition-all group" @click="selectTariff(t)">
                             <div class="flex justify-between items-start mb-2">
                                 <h4 class="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
                                     {{ t.name }}
@@ -254,8 +243,7 @@
                             </div>
                             <div class="text-sm text-slate-400 flex flex-wrap gap-4">
                                 <span><i class="fas fa-check text-green-400 mr-1"></i> {{ t.daily_limit }} ta/kun</span>
-                                <span><i class="fas fa-calendar text-orange-400 mr-1"></i> {{ t.duration_days }}
-                                    kun</span>
+                                <span><i class="fas fa-calendar text-orange-400 mr-1"></i> {{ t.duration_days }}kun</span>
                             </div>
                         </div>
                     </div>
@@ -270,10 +258,9 @@
                         <div class="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/20 text-center">
                             <div class="text-sm text-indigo-300 uppercase tracking-wider mb-1">Maqsad</div>
                             <div class="text-2xl font-bold text-white mb-1">{{ selectedTariff.name }}</div>
-                            <div v-if="selectedTariff.id" class="text-xl text-indigo-400 font-mono">{{
-                                formatPrice(selectedTariff.price) }}</div>
+                            <div v-if="selectedTariff.id" class="text-xl text-indigo-400 font-mono">{{ formatPrice(selectedTariff.price) }}</div>
                             <div v-else class="text-sm text-slate-400">
-                                <label class="block text-xs uppercase mb-1">To'lanayotgan Summa</label>
+                                <label class="block text-xs uppercase mb-1">To'lanayotgan summa</label>
                                 <input type="text" v-model="declaredAmount" @input="formatDeclaredAmount"
                                     class="w-full bg-slate-900 border border-indigo-500/50 rounded-lg p-2 text-center text-white font-mono text-xl font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
                                     placeholder="0">
@@ -284,17 +271,17 @@
                         <div v-if="selectedTariff.id && user.balance >= selectedTariff.price"
                             class="bg-indigo-600/20 rounded-xl p-4 border border-indigo-500/50 mb-4 animate-pulse">
                             <div class="flex justify-between items-center mb-2">
-                                <div class="text-indigo-300 font-bold"><i class="fas fa-wallet mr-2"></i>Balansdan
-                                    to'lash</div>
+                                <div class="text-indigo-300 font-bold"><i class="fas fa-wallet mr-2"></i>
+                                    Balansdan to'lash
+                                </div>
                                 <div class="text-white font-mono font-bold">{{ formatPrice(user.balance) }} mavjud</div>
                             </div>
                             <button @click="buyWithBalance" :disabled="isSubmitting"
                                 class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-500/30 flex justify-center items-center gap-2">
-                                <span v-if="!isSubmitting">Hozir Sotib Olish</span>
+                                <span v-if="!isSubmitting">Hozir sotib olish</span>
                                 <i v-else class="fas fa-spinner fa-spin"></i>
                             </button>
-                            <div class="text-center mt-2 text-xs text-indigo-300">Hisobingizdan {{
-                                formatPrice(selectedTariff.price) }} yechiladi</div>
+                            <div class="text-center mt-2 text-xs text-indigo-300">Hisobingizdan {{ formatPrice(selectedTariff.price) }} yechiladi</div>
                         </div>
 
                         <div class="space-y-4" v-else>
@@ -306,14 +293,14 @@
                                 <div class="text-xs text-slate-500 uppercase tracking-wider mb-2">To'lov uchun karta
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <div class="text-xl font-mono font-bold text-white tracking-wider">8600 1234 5678
-                                        9012</div>
-                                    <button @click="copyCard" class="text-blue-400 hover:text-white transition-colors"
-                                        title="Nusxalash">
+                                    <div class="text-xl font-mono font-bold text-white tracking-wider">
+                                        9860 0101 2365 1621
+                                    </div>
+                                    <button @click="copyCard" class="text-blue-400 hover:text-white transition-colors" title="Nusxalash">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
-                                <div class="text-xs text-slate-400 mt-2">Jamshid K.</div>
+                                <div class="text-xs text-slate-400 mt-2">Abdulhafiz Davlatov.</div>
                             </div>
 
                             <!-- User ID Info -->
@@ -328,22 +315,18 @@
                             <!-- Upload Receipt -->
                             <div>
                                 <label class="block text-sm font-medium text-slate-300 mb-2">
-                                    To'lov chekini yuklash <span v-if="!selectedTariff.id"
-                                        class="text-xs text-slate-500">(Summa chekda ko'rinishi shart)</span>
+                                    To'lov chekini yuklash <span v-if="!selectedTariff.id" class="text-xs text-slate-500">(Summa chekda ko'rinishi shart)</span>
                                 </label>
                                 <div class="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center hover:border-blue-500 transition-colors cursor-pointer"
-                                    @click="$refs.receiptInput.click()"
-                                    :class="{'border-green-500 bg-green-500/5': receiptFile}">
-                                    <input type="file" ref="receiptInput" class="hidden" accept="image/*"
-                                        @change="handleReceiptSelect">
+                                    @click="$refs.receiptInput.click()" :class="{'border-green-500 bg-green-500/5': receiptFile}">
+                                    <input type="file" ref="receiptInput" class="hidden" accept="image/*" @change="handleReceiptSelect">
                                     <div v-if="!receiptFile">
                                         <i class="fas fa-camera text-2xl text-slate-500 mb-2"></i>
                                         <div class="text-sm text-slate-400">Rasm tanlash uchun bosing</div>
                                     </div>
                                     <div v-else class="flex items-center justify-center gap-2 text-green-400">
                                         <i class="fas fa-check-circle"></i>
-                                        <span class="text-sm font-bold truncate max-w-[200px]">{{ receiptFile.name
-                                            }}</span>
+                                        <span class="text-sm font-bold truncate max-w-[200px]">{{ receiptFile.name }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -351,7 +334,7 @@
                             <button @click="submitPayment" :disabled="!receiptFile || isSubmitting"
                                 class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                 <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
-                                <span v-else>To'lovni Tasdiqlash</span>
+                                <span v-else>To'lovni tasdiqlash</span>
                             </button>
                         </div>
                     </div>
@@ -409,7 +392,7 @@
                 };
 
                 const copyCard = () => {
-                    navigator.clipboard.writeText("8600123456789012");
+                    navigator.clipboard.writeText("9860010123651621");
                     Swal.fire({
                         icon: 'success',
                         title: 'Nusxalandi!',
@@ -568,7 +551,6 @@
                     fetchTransactions();
                     fetchTariffs();
                 });
-
 
                 const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
 

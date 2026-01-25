@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parolni tiklash - Moodle Converter</title>
+    <title>Parolni tiklash - Test Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@
 </head>
 
 <body
-    class="min-h-screen flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+    class="min-h-screen flex items-center justify-center bg-[url('')]">
 
     <div id="app" class="w-full max-w-md p-6">
         <div class="glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden">
@@ -43,7 +43,7 @@
             <!-- STEP 1: REQUEST CODE (Forgot) -->
             <div v-if="step === 'email'">
                 <div class="text-center mb-4">
-                    <h3 class="text-xl font-bold text-white">Parolni Tiklash</h3>
+                    <h3 class="text-xl font-bold text-white">Parolni tiklash</h3>
                     <p class="text-slate-400 text-xs">Emailingizni kiriting va biz kod yuboramiz</p>
                 </div>
                 <form @submit.prevent="sendCode" class="space-y-4">
@@ -58,7 +58,7 @@
                     </div>
                     <button type="submit" :disabled="loading"
                         class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
-                        <span v-if="!loading">Kodni Yuborish</span>
+                        <span v-if="!loading">Kodni yuborish</span>
                         <i v-else class="fas fa-spinner fa-spin"></i>
                     </button>
                     <div class="text-center mt-4">
@@ -70,18 +70,18 @@
             <!-- STEP 2: RESET PASSWORD -->
             <div v-else-if="step === 'reset'">
                 <div class="text-center mb-4">
-                    <h3 class="text-xl font-bold text-white">Yangi Parol</h3>
+                    <h3 class="text-xl font-bold text-white">Yangi parol</h3>
                     <p class="text-slate-400 text-xs">Tasdiqlash kodi va yangi parolni kiriting</p>
                 </div>
                 <form @submit.prevent="resetPassword" class="space-y-4">
                     <div class="flex justify-center mb-4">
                         <input v-model="code" maxlength="4"
                             class="w-32 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xl text-center text-white font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="CODE">
+                            placeholder="****">
                     </div>
 
                     <div>
-                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Yangi Parol</label>
+                        <label class="block text-slate-400 text-xs uppercase tracking-wider mb-1">Yangi parol</label>
                         <div class="relative">
                             <input v-model="newPassword" type="password"
                                 class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 pl-10 text-white focus:outline-none focus:border-blue-500 transition-colors"
@@ -101,7 +101,7 @@
 
                     <button type="submit" :disabled="loading"
                         class="w-full btn-primary py-3 rounded-xl text-white font-bold shadow-lg flex justify-center items-center">
-                        <span v-if="!loading">Parolni Yangilash</span>
+                        <span v-if="!loading">Parolni yangilash</span>
                         <i v-else class="fas fa-spinner fa-spin"></i>
                     </button>
                 </form>
