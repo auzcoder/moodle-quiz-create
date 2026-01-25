@@ -203,11 +203,9 @@
 
                     <header class="text-center mb-12">
                         <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                            <span class="gradient-text">{{ outputFormat === 'hemis' ? 'Hemis' : 'Moodle' }} test
-                                konvertori</span>
+                            <span class="gradient-text">{{ outputFormat === 'hemis' ? 'Hemis' : 'Moodle' }} test konvertori</span>
                         </h1>
-                        <p class="text-slate-400 text-lg">Moodle tizimi uchun .doc va .docx fayllarni test formatiga
-                            (.txt) o'tkazish.</p>
+                        <p class="text-slate-400 text-lg">{{ outputFormat === 'hemis' ? 'Hemis' : 'Moodle' }} tizimi uchun .doc va .docx fayllarni test formatiga (.txt) o'tkazish.</p>
                     </header>
 
                     <div class="grid md:grid-cols-5 gap-8">
