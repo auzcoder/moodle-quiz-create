@@ -418,11 +418,15 @@
                 transform: translateX(-50%);
             }
         }
+
+        [v-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 
 <body>
-    <div id="app">
+    <div id="app" v-cloak>
         <!-- Particles Background -->
         <div class="particles">
             <div v-for="i in 20" :key="i" class="particle" :style="{
