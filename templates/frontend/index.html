@@ -26,9 +26,9 @@
 
         /* Animated Gradient Background */
         .hero-gradient {
-            background: linear-gradient(-45deg, #0f172a, #1e3a5f, #312e81, #0f172a);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            background: linear-gradient(-45deg, #0f172a, #1e3a5f, #312e81, #1e1b4b, #0f172a);
+            background-size: 500% 500%;
+            animation: gradientShift 20s ease infinite;
         }
 
         @keyframes gradientShift {
@@ -36,8 +36,16 @@
                 background-position: 0% 50%;
             }
 
+            25% {
+                background-position: 50% 100%;
+            }
+
             50% {
                 background-position: 100% 50%;
+            }
+
+            75% {
+                background-position: 50% 0%;
             }
 
             100% {
@@ -49,51 +57,108 @@
         .blob {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: float 8s ease-in-out infinite;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: float 10s ease-in-out infinite;
         }
 
         .blob-1 {
-            width: 600px;
-            height: 600px;
+            width: 700px;
+            height: 700px;
             background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            top: -200px;
+            top: -300px;
             right: -200px;
-            animation-delay: 0s;
+            animation: float1 12s ease-in-out infinite;
         }
 
         .blob-2 {
-            width: 400px;
-            height: 400px;
+            width: 500px;
+            height: 500px;
             background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-            bottom: -100px;
-            left: -100px;
-            animation-delay: 2s;
+            bottom: -200px;
+            left: -150px;
+            animation: float2 15s ease-in-out infinite;
         }
 
         .blob-3 {
-            width: 300px;
-            height: 300px;
+            width: 400px;
+            height: 400px;
             background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
-            top: 50%;
-            left: 50%;
-            animation-delay: 4s;
+            top: 40%;
+            left: 30%;
+            animation: float3 18s ease-in-out infinite;
         }
 
-        @keyframes float {
+        .blob-4 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            top: 20%;
+            right: 20%;
+            animation: float4 14s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(50px, 30px) scale(1.1) rotate(5deg);
+            }
+
+            50% {
+                transform: translate(-30px, 60px) scale(0.95) rotate(-5deg);
+            }
+
+            75% {
+                transform: translate(40px, -20px) scale(1.05) rotate(3deg);
+            }
+        }
+
+        @keyframes float2 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
+            33% {
+                transform: translate(-40px, -40px) scale(1.1) rotate(-5deg);
+            }
+
+            66% {
+                transform: translate(30px, 20px) scale(0.9) rotate(5deg);
+            }
+        }
+
+        @keyframes float3 {
 
             0%,
             100% {
                 transform: translate(0, 0) scale(1);
             }
 
+            50% {
+                transform: translate(60px, -60px) scale(1.2);
+            }
+        }
+
+        @keyframes float4 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
             33% {
-                transform: translate(30px, -30px) scale(1.05);
+                transform: translate(-30px, 50px) scale(1.15) rotate(10deg);
             }
 
             66% {
-                transform: translate(-20px, 20px) scale(0.95);
+                transform: translate(40px, -30px) scale(0.9) rotate(-10deg);
             }
         }
 
@@ -110,23 +175,49 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradientText 5s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientText {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         /* Hover Glow */
         .hover-glow {
-            transition: all 0.4s ease;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .hover-glow:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.4);
+        }
+
+        /* 3D Card Effect */
+        .card-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+        }
+
+        .card-3d:hover {
+            transform: perspective(1000px) rotateY(5deg) rotateX(5deg);
         }
 
         /* Fade In Animation */
         .fade-in {
             opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.8s ease forwards;
+            transform: translateY(40px);
+            animation: fadeInUp 1s ease forwards;
         }
 
         .fade-in-delay-1 {
@@ -152,33 +243,44 @@
             }
         }
 
-        /* Typing Animation */
-        .typing {
-            overflow: hidden;
-            border-right: 3px solid #60a5fa;
-            white-space: nowrap;
-            animation: typing 3s steps(40, end), blink 0.75s step-end infinite;
+        /* Scale In */
+        .scale-in {
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scaleIn 0.6s ease forwards;
         }
 
-        @keyframes typing {
-            from {
-                width: 0;
-            }
-
+        @keyframes scaleIn {
             to {
-                width: 100%;
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
-        @keyframes blink {
+        /* Slide In from sides */
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-100px);
+            animation: slideInLeft 0.8s ease forwards;
+        }
 
-            from,
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(100px);
+            animation: slideInRight 0.8s ease forwards;
+        }
+
+        @keyframes slideInLeft {
             to {
-                border-color: transparent;
+                opacity: 1;
+                transform: translateX(0);
             }
+        }
 
-            50% {
-                border-color: #60a5fa;
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
             }
         }
 
@@ -198,21 +300,22 @@
             }
 
             40% {
-                transform: translateY(-10px);
+                transform: translateY(-15px);
             }
 
             60% {
-                transform: translateY(-5px);
+                transform: translateY(-7px);
             }
         }
 
         /* Feature Card Icon Animation */
         .feature-icon {
-            transition: all 0.4s ease;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .feature-card:hover .feature-icon {
-            transform: scale(1.2) rotate(5deg);
+            transform: scale(1.3) rotate(10deg);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.5);
         }
 
         /* Pulse Ring */
@@ -227,14 +330,139 @@
             }
 
             100% {
-                transform: scale(2);
+                transform: scale(2.5);
                 opacity: 0;
+            }
+        }
+
+        /* Glow Effect */
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            }
+
+            to {
+                box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+            }
+        }
+
+        /* Rotating Border */
+        .rotating-border {
+            position: relative;
+        }
+
+        .rotating-border::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            background: conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #f43f5e, #3b82f6);
+            border-radius: inherit;
+            z-index: -1;
+            animation: rotateBorder 3s linear infinite;
+        }
+
+        @keyframes rotateBorder {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Shimmer Effect */
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                left: 100%;
+            }
+        }
+
+        /* Floating Animation for cards */
+        .float-card {
+            animation: floatCard 6s ease-in-out infinite;
+        }
+
+        .float-card-delay-1 {
+            animation-delay: 1s;
+        }
+
+        .float-card-delay-2 {
+            animation-delay: 2s;
+        }
+
+        .float-card-delay-3 {
+            animation-delay: 3s;
+        }
+
+        @keyframes floatCard {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
             }
         }
 
         /* Stats Counter */
         .counter {
             font-variant-numeric: tabular-nums;
+        }
+
+        /* Particle Animation */
+        .particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: particleFloat 15s linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
         }
 
         /* Mobile Menu */
@@ -246,19 +474,80 @@
         .mobile-menu.open {
             transform: translateX(0);
         }
+
+        /* Button Ripple */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-ripple::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.5s, opacity 0.3s;
+        }
+
+        .btn-ripple:active::after {
+            transform: scale(2);
+            opacity: 1;
+            transition: 0s;
+        }
+
+        /* Text Reveal */
+        .text-reveal {
+            clip-path: inset(0 100% 0 0);
+            animation: textReveal 1s ease forwards;
+        }
+
+        @keyframes textReveal {
+            to {
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        /* Marquee */
+        .marquee {
+            animation: marquee 20s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
+        <!-- Particles Background -->
+        <div class="particles">
+            <div v-for="i in 20" :key="i" class="particle" :style="{
+                left: Math.random() * 100 + '%',
+                animationDelay: Math.random() * 15 + 's',
+                animationDuration: (15 + Math.random() * 10) + 's'
+            }"></div>
+        </div>
+
         <!-- Navigation -->
         <nav class="fixed top-0 left-0 right-0 z-50 glass">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <!-- Logo -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 group cursor-pointer">
                         <div
-                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
                             <i class="fas fa-file-alt text-white text-lg"></i>
                         </div>
                         <span class="text-xl font-bold text-white">Test<span
@@ -267,27 +556,49 @@
 
                     <!-- Desktop Nav -->
                     <div class="hidden md:flex items-center gap-8">
-                        <a href="#features" class="text-slate-300 hover:text-white transition-colors">Xususiyatlar</a>
-                        <a href="#how-it-works" class="text-slate-300 hover:text-white transition-colors">Qanday
-                            ishlaydi</a>
-                        <a href="#pricing" class="text-slate-300 hover:text-white transition-colors">Tariflar</a>
+                        <a href="#features" class="text-slate-300 hover:text-white transition-colors relative group">
+                            Xususiyatlar
+                            <span
+                                class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        <a href="#how-it-works"
+                            class="text-slate-300 hover:text-white transition-colors relative group">
+                            Qanday ishlaydi
+                            <span
+                                class="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        <a href="#pricing" class="text-slate-300 hover:text-white transition-colors relative group">
+                            Tariflar
+                            <span
+                                class="absolute -bottom-1 left-0 w-0 h-0.5 bg-pink-500 group-hover:w-full transition-all duration-300"></span>
+                        </a>
                     </div>
 
                     <!-- Auth Buttons -->
                     <div class="hidden md:flex items-center gap-3">
-                        <a href="/login"
-                            class="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium">
-                            Kirish
-                        </a>
-                        <a href="/register"
-                            class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">
-                            Ro'yxatdan o'tish
-                        </a>
+                        <template v-if="isLoggedIn">
+                            <a href="/dashboard"
+                                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 btn-ripple">
+                                <i class="fas fa-th-large mr-2"></i>Dashboard
+                            </a>
+                        </template>
+                        <template v-else>
+                            <a href="/login"
+                                class="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium">
+                                Kirish
+                            </a>
+                            <a href="/register"
+                                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 btn-ripple">
+                                Ro'yxatdan o'tish
+                            </a>
+                        </template>
                     </div>
 
                     <!-- Mobile Menu Button -->
                     <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-white p-2">
-                        <i :class="mobileMenuOpen ? 'fas fa-times' : 'fas fa-bars'" class="text-xl"></i>
+                        <i :class="mobileMenuOpen ? 'fas fa-times' : 'fas fa-bars'"
+                            class="text-xl transition-transform duration-300"
+                            :style="{transform: mobileMenuOpen ? 'rotate(90deg)' : 'rotate(0)'}"></i>
                     </button>
                 </div>
             </div>
@@ -303,11 +614,19 @@
                     <a href="#pricing" @click="mobileMenuOpen = false"
                         class="text-slate-300 hover:text-white py-2">Tariflar</a>
                     <hr class="border-slate-700">
-                    <a href="/login" class="text-slate-300 hover:text-white py-2">Kirish</a>
-                    <a href="/register"
-                        class="px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-center">
-                        Ro'yxatdan o'tish
-                    </a>
+                    <template v-if="isLoggedIn">
+                        <a href="/dashboard"
+                            class="px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-center">
+                            <i class="fas fa-th-large mr-2"></i>Dashboard
+                        </a>
+                    </template>
+                    <template v-else>
+                        <a href="/login" class="text-slate-300 hover:text-white py-2">Kirish</a>
+                        <a href="/register"
+                            class="px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-center">
+                            Ro'yxatdan o'tish
+                        </a>
+                    </template>
                 </div>
             </div>
         </nav>
@@ -318,24 +637,25 @@
             <div class="blob blob-1"></div>
             <div class="blob blob-2"></div>
             <div class="blob blob-3"></div>
+            <div class="blob blob-4"></div>
 
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div class="text-center">
                     <!-- Badge -->
                     <div
-                        class="fade-in inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8">
+                        class="fade-in inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8 shimmer">
                         <span class="relative flex h-2 w-2">
                             <span
                                 class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                         </span>
-                        <span class="text-sm text-blue-300">Minglab o'qituvchilar ishonadi</span>
+                        <span class="text-sm text-blue-300">{{ animatedStats.users }}+ foydalanuvchi ishonadi</span>
                     </div>
 
                     <!-- Headline -->
                     <h1
                         class="fade-in fade-in-delay-1 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
-                        <span class="text-white">Word fayllarni</span><br>
+                        <span class="text-white text-reveal">Word fayllarni</span><br>
                         <span class="gradient-text">Test formatiga</span><br>
                         <span class="text-white">aylan­tiring</span>
                     </h1>
@@ -350,28 +670,33 @@
                     <!-- CTA Buttons -->
                     <div
                         class="fade-in fade-in-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                        <a href="/register" class="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold text-lg transition-all shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center gap-3">
-                            <span>Bepul boshlash</span>
-                            <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        <a :href="isLoggedIn ? '/dashboard' : '/register'"
+                            class="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold text-lg transition-all shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center gap-3 glow btn-ripple">
+                            <span v-if="isLoggedIn">Dashboardga o'tish</span>
+                            <span v-else>Bepul boshlash</span>
+                            <i
+                                class="fas fa-arrow-right group-hover:translate-x-2 transition-transform duration-300"></i>
                         </a>
-                        <a href="#how-it-works" class="px-8 py-4 glass text-white rounded-2xl font-bold text-lg hover:bg-white/10 transition-all flex items-center gap-3">
-                            <i class="fas fa-play-circle text-blue-400"></i>
+                        <a href="#how-it-works"
+                            class="group px-8 py-4 glass text-white rounded-2xl font-bold text-lg hover:bg-white/10 transition-all flex items-center gap-3">
+                            <i class="fas fa-play-circle text-blue-400 group-hover:scale-125 transition-transform"></i>
                             <span>Qanday ishlaydi?</span>
                         </a>
                     </div>
 
                     <!-- Stats -->
-                    <div class="fade-in fade-in-delay-4 grid grid-cols-3 gap-8 max-w-lg mx-auto">
-                        <div class="text-center">
-                            <div class="text-3xl sm:text-4xl font-bold text-white counter">{{ animatedStats.files }}+ </div>
+                    <div class="fade-in fade-in-delay-4 grid grid-cols-3 gap-8 max-w-xl mx-auto">
+                        <div class="text-center glass rounded-2xl p-4 float-card">
+                            <div class="text-3xl sm:text-4xl font-bold text-white counter">{{ animatedStats.files }}+
+                            </div>
                             <div class="text-sm text-slate-400">Fayllar</div>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center glass rounded-2xl p-4 float-card float-card-delay-1">
                             <div class="text-3xl sm:text-4xl font-bold text-white counter">{{ animatedStats.users }}+
                             </div>
                             <div class="text-sm text-slate-400">Foydalanuvchilar</div>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center glass rounded-2xl p-4 float-card float-card-delay-2">
                             <div class="text-3xl sm:text-4xl font-bold text-white counter">99%</div>
                             <div class="text-sm text-slate-400">Muvaffaqiyat</div>
                         </div>
@@ -395,11 +720,11 @@
                 <div class="text-center mb-16">
                     <div
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-4">
-                        <i class="fas fa-star text-purple-400"></i>
+                        <i class="fas fa-star text-purple-400 animate-pulse"></i>
                         <span class="text-sm text-purple-300">Xususiyatlar</span>
                     </div>
                     <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-                        Nima uchun bizni tanlashadi?
+                        Nima uchun bizni <span class="gradient-text">tanlashadi?</span>
                     </h2>
                     <p class="text-slate-400 text-lg max-w-2xl mx-auto">
                         Eng zamonaviy texnologiyalar bilan qurilgan platforma
@@ -408,7 +733,7 @@
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <!-- Feature 1 -->
-                    <div class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer">
+                    <div class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer card-3d float-card">
                         <div
                             class="feature-icon w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4">
                             <i class="fas fa-bolt text-white text-2xl"></i>
@@ -418,7 +743,8 @@
                     </div>
 
                     <!-- Feature 2 -->
-                    <div class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer">
+                    <div
+                        class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer card-3d float-card float-card-delay-1">
                         <div
                             class="feature-icon w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
                             <i class="fas fa-shield-alt text-white text-2xl"></i>
@@ -428,7 +754,8 @@
                     </div>
 
                     <!-- Feature 3 -->
-                    <div class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer">
+                    <div
+                        class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer card-3d float-card float-card-delay-2">
                         <div
                             class="feature-icon w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mb-4">
                             <i class="fas fa-image text-white text-2xl"></i>
@@ -438,7 +765,8 @@
                     </div>
 
                     <!-- Feature 4 -->
-                    <div class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer">
+                    <div
+                        class="feature-card glass rounded-2xl p-6 hover-glow group cursor-pointer card-3d float-card float-card-delay-3">
                         <div
                             class="feature-icon w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center mb-4">
                             <i class="fas fa-sync text-white text-2xl"></i>
@@ -456,11 +784,11 @@
                 <div class="text-center mb-16">
                     <div
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-4">
-                        <i class="fas fa-cogs text-cyan-400"></i>
+                        <i class="fas fa-cogs text-cyan-400 animate-spin" style="animation-duration: 3s;"></i>
                         <span class="text-sm text-cyan-300">Qanday ishlaydi</span>
                     </div>
                     <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-                        3 oddiy qadam
+                        3 oddiy <span class="gradient-text">qadam</span>
                     </h2>
                     <p class="text-slate-400 text-lg max-w-2xl mx-auto">
                         Hech qanday murakkab sozlamasiz, faqat yuklang va tayyor!
@@ -469,28 +797,29 @@
 
                 <div class="grid md:grid-cols-3 gap-8">
                     <!-- Step 1 -->
-                    <div class="relative">
-                        <div class="glass rounded-2xl p-8 text-center hover-glow">
+                    <div class="relative slide-in-left" style="animation-delay: 0.2s;">
+                        <div class="glass rounded-2xl p-8 text-center hover-glow shimmer">
                             <div
-                                class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                                class="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg glow">
                                 1</div>
                             <div
-                                class="w-20 h-20 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-6">
+                                class="w-20 h-20 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                                 <i class="fas fa-upload text-blue-400 text-3xl"></i>
                             </div>
                             <h3 class="text-xl font-bold text-white mb-2">Faylni yuklang</h3>
-                            <p class="text-slate-400">.doc yoki .docx faylni tizimga yuklang</p>
+                            <p class="text-slate-400">.doc yoki .docx formatdagi faylni tizimga yuklang</p>
                         </div>
-                        <div class="hidden md:block absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-10">
-                            <i class="fas fa-arrow-right text-slate-600 text-2xl"></i>
+                        <div
+                            class="hidden md:flex absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center">
+                            <i class="fas fa-chevron-right text-blue-500 text-2xl animate-pulse"></i>
                         </div>
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="relative">
-                        <div class="glass rounded-2xl p-8 text-center hover-glow">
+                    <div class="relative" style="animation-delay: 0.4s;">
+                        <div class="glass rounded-2xl p-8 text-center hover-glow shimmer">
                             <div
-                                class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                                class="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg glow">
                                 2</div>
                             <div
                                 class="w-20 h-20 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-6">
@@ -499,16 +828,17 @@
                             <h3 class="text-xl font-bold text-white mb-2">Formatni tanlang</h3>
                             <p class="text-slate-400">Moodle yoki Hemis formatini tanlang</p>
                         </div>
-                        <div class="hidden md:block absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-10">
-                            <i class="fas fa-arrow-right text-slate-600 text-2xl"></i>
+                        <div
+                            class="hidden md:flex absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center">
+                            <i class="fas fa-chevron-right text-purple-500 text-2xl animate-pulse"></i>
                         </div>
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="relative">
-                        <div class="glass rounded-2xl p-8 text-center hover-glow">
+                    <div class="relative slide-in-right" style="animation-delay: 0.6s;">
+                        <div class="glass rounded-2xl p-8 text-center hover-glow shimmer">
                             <div
-                                class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                                class="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg glow">
                                 3</div>
                             <div
                                 class="w-20 h-20 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
@@ -528,11 +858,11 @@
                 <div class="text-center mb-16">
                     <div
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">
-                        <i class="fas fa-crown text-amber-400"></i>
+                        <i class="fas fa-crown text-amber-400 animate-bounce"></i>
                         <span class="text-sm text-amber-300">Tariflar</span>
                     </div>
                     <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-                        O'zingizga mos tarifni tanlang
+                        O'zingizga mos <span class="gradient-text">tarifni</span> tanlang
                     </h2>
                     <p class="text-slate-400 text-lg max-w-2xl mx-auto">
                         Bepul boshlang, kerak bo'lganda yangilang
@@ -541,11 +871,11 @@
 
                 <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                     <div v-for="(tariff, index) in tariffs" :key="tariff.id"
-                        class="glass rounded-2xl overflow-hidden hover-glow"
-                        :class="{'ring-2 ring-blue-500 scale-105': index === 1}">
+                        class="glass rounded-2xl overflow-hidden hover-glow card-3d"
+                        :class="{'ring-2 ring-blue-500 scale-105 glow': index === 1}">
                         <div v-if="index === 1"
                             class="bg-gradient-to-r from-blue-600 to-purple-600 text-center py-2 text-sm font-bold text-white">
-                            <i class="fas fa-fire mr-1"></i> Eng ommabop
+                            <i class="fas fa-fire mr-1 animate-pulse"></i> Eng ommabop
                         </div>
                         <div class="p-8">
                             <h3 class="text-2xl font-bold text-white mb-2">{{ tariff.name }}</h3>
@@ -571,10 +901,11 @@
                                     <span>Rasmlarni qo'llab-quvvatlash</span>
                                 </li>
                             </ul>
-                            <a href="/register"
-                                class="block w-full py-3 rounded-xl font-bold text-center transition-all"
+                            <a :href="isLoggedIn ? '/dashboard' : '/register'"
+                                class="block w-full py-3 rounded-xl font-bold text-center transition-all btn-ripple"
                                 :class="index === 1 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40' : 'bg-slate-800 text-white hover:bg-slate-700'">
-                                Boshlash
+                                <span v-if="isLoggedIn">Dashboardga o'tish</span>
+                                <span v-else>Boshlash</span>
                             </a>
                         </div>
                     </div>
@@ -585,19 +916,20 @@
         <!-- CTA Section -->
         <section class="py-24 relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-            <div class="blob blob-1" style="opacity: 0.2;"></div>
-            <div class="blob blob-2" style="opacity: 0.2;"></div>
+            <div class="blob blob-1" style="opacity: 0.3;"></div>
+            <div class="blob blob-2" style="opacity: 0.3;"></div>
 
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-                    Hoziroq boshlashga tayyormisiz?
+                    Hoziroq <span class="gradient-text">boshlashga</span> tayyormisiz?
                 </h2>
                 <p class="text-xl text-slate-400 mb-8">
-                    Minglab o'qituvchilar qatoriga qo'shiling va vaqtingizni tejang
+                    {{ animatedStats.users }}+ o'qituvchi qatoriga qo'shiling va vaqtingizni tejang
                 </p>
-                <a href="/register"
-                    class="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold text-xl transition-all shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50">
-                    <span>Bepul ro'yxatdan o'tish</span>
+                <a :href="isLoggedIn ? '/dashboard' : '/register'"
+                    class="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold text-xl transition-all shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 glow btn-ripple">
+                    <span v-if="isLoggedIn"><i class="fas fa-th-large mr-2"></i>Dashboardga o'tish</span>
+                    <span v-else>Bepul ro'yxatdan o'tish</span>
                     <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
@@ -618,7 +950,8 @@
                     <div class="flex items-center gap-6 text-slate-400">
                         <a href="#features" class="hover:text-white transition-colors">Xususiyatlar</a>
                         <a href="#pricing" class="hover:text-white transition-colors">Tariflar</a>
-                        <a href="/login" class="hover:text-white transition-colors">Kirish</a>
+                        <a v-if="!isLoggedIn" href="/login" class="hover:text-white transition-colors">Kirish</a>
+                        <a v-else href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
                     </div>
                     <div class="text-slate-500 text-sm">
                         © 2024 TestConverter. Barcha huquqlar himoyalangan.
@@ -629,13 +962,19 @@
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({
             setup() {
                 const mobileMenuOpen = ref(false);
                 const tariffs = ref([]);
                 const animatedStats = ref({ files: 0, users: 0 });
+
+                // Check if user is logged in
+                const isLoggedIn = computed(() => {
+                    const token = localStorage.getItem('access_token');
+                    return !!token;
+                });
 
                 // Fetch tariffs
                 const fetchTariffs = async () => {
@@ -651,33 +990,60 @@
                     }
                 };
 
-                // Fetch stats
+                // Fetch real stats
                 const fetchStats = async () => {
                     try {
-                        const res = await fetch('/stats');
-                        if (res.ok) {
-                            const data = await res.json();
-                            animateCounter('files', data.count || 1000);
-                            animateCounter('users', Math.floor((data.count || 1000) / 10));
+                        // Fetch file count
+                        const statsRes = await fetch('/stats');
+                        let fileCount = 1000;
+                        if (statsRes.ok) {
+                            const statsData = await statsRes.json();
+                            fileCount = statsData.count || 1000;
                         }
+
+                        // Fetch real user count
+                        let userCount = 100;
+                        try {
+                            const usersRes = await fetch('/api/public/stats');
+                            if (usersRes.ok) {
+                                const usersData = await usersRes.json();
+                                userCount = usersData.users || 100;
+                            }
+                        } catch (e) {
+                            // Fallback: estimate from file count
+                            userCount = Math.max(10, Math.floor(fileCount / 8));
+                        }
+
+                        animateCounter('files', fileCount);
+                        animateCounter('users', userCount);
                     } catch (e) {
                         animateCounter('files', 1000);
                         animateCounter('users', 100);
                     }
                 };
 
-                // Animate counter
+                // Animate counter with easing
                 const animateCounter = (key, target) => {
-                    let current = 0;
-                    const increment = Math.ceil(target / 50);
-                    const interval = setInterval(() => {
-                        current += increment;
-                        if (current >= target) {
-                            current = target;
-                            clearInterval(interval);
+                    const duration = 2000;
+                    const startTime = Date.now();
+
+                    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easedProgress = easeOutQuart(progress);
+
+                        animatedStats.value[key] = Math.floor(target * easedProgress);
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            animatedStats.value[key] = target;
                         }
-                        animatedStats.value[key] = current;
-                    }, 30);
+                    };
+
+                    requestAnimationFrame(animate);
                 };
 
                 // Format price
@@ -695,7 +1061,8 @@
                     mobileMenuOpen,
                     tariffs,
                     animatedStats,
-                    formatPrice
+                    formatPrice,
+                    isLoggedIn
                 };
             }
         }).mount('#app');

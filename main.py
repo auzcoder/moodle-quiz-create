@@ -995,6 +995,28 @@ async def get_stats():
     finally:
         conn.close()
 
+@app.get("/api/public/stats")
+async def get_public_stats():
+    """Public endpoint to get user and file stats for landing page"""
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        # Count users
+        cur.execute("SELECT COUNT(*) FROM users")
+        user_count = cur.fetchone()[0] or 0
+        
+        # Count completed files
+        cur.execute("SELECT COUNT(*) FROM jobs WHERE status = 'completed'")
+        file_count = cur.fetchone()[0] or 0
+        
+        cur.close()
+        return {"users": user_count, "files": file_count}
+    except Exception as e:
+        logger.error(f"Error fetching public stats: {e}")
+        return {"users": 0, "files": 0}
+    finally:
+        conn.close()
+
 @app.get("/")
 async def root():
     return FileResponse('templates/frontend/index.html')
