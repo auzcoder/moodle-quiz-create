@@ -997,7 +997,7 @@ async def get_stats():
 
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/dashboard")
+    return FileResponse('templates/frontend/index.html')
 
 @app.get("/dashboard")
 async def dashboard():
