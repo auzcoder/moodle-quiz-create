@@ -62,19 +62,18 @@
             <div class="grid md:grid-cols-2 gap-8" v-if="!loading">
                 <!-- Personal Info -->
                 <div class="space-y-6">
-                    <div class="bg-indigo-500/10 rounded-2xl p-6 border border-indigo-500/20 mb-6">
-                        <div class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Mening hisobim</div>
-                        <div class="flex items-end justify-between">
-                            <div class="text-2xl font-bold text-white">{{ formatPrice(user.balance || 0) }}</div>
-                            <button @click="showModal('pricing')"
-                                class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="fas fa-plus"></i> To'ldirish
-                            </button>
-                        </div>
-                    </div>
+<!--                    <div class="bg-indigo-500/10 rounded-2xl p-6 border border-indigo-500/20 mb-6">-->
+<!--                        <div class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Mening hisobim</div>-->
+<!--                        <div class="flex items-end justify-between">-->
+<!--                            <div class="text-2xl font-bold text-white">{{ formatPrice(user.balance || 0) }}</div>-->
+<!--                            <button @click="showModal('pricing')"-->
+<!--                                class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">-->
+<!--                                <i class="fas fa-plus"></i> To'ldirish-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
 
-                    <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy
-                        ma'lumotlar</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4 border-l-4 border-blue-500 pl-3">Shaxsiy ma'lumotlar</h3>
 
                     <div class="space-y-4">
                         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center space-x-4">
@@ -136,71 +135,68 @@
                     <!-- Tariff Info -->
                     <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
                         <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <i class="fas fa-crown text-amber-400"></i>
-                            Tarif rejasi
+                            <i class="fas fa-crown text-amber-400"></i> Siz uchun har oy yangi limitlar
+<!--                            Tarif rejasi-->
                         </h3>
 
-                        <div class="mb-6 text-center">
-                            <div
-                                class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-1">
-                                {{ user.tariff_name || 'Free' }}
-                            </div>
-                            <div class="text-xs text-slate-400">
-                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at)
-                                    }}</span>
-                            </div>
-                        </div>
+<!--                        <div class="mb-6 text-center">-->
+<!--                            <div class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-1">-->
+<!--                                {{ user.tariff_name || 'Free' }}-->
+<!--                            </div>-->
+<!--                            <div class="text-xs text-slate-400">-->
+<!--                                Amal qilish muddati: <span class="text-slate-200">{{ formatDate(user.tariff_expires_at) }}</span>-->
+<!--                            </div>-->
+<!--                        </div>-->
 
                         <!-- Usage Bar -->
                         <div class="mb-2 flex justify-between text-sm">
                             <span class="text-slate-400">Oylik limit</span>
-                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0
-                                }}</span>
+                            <span class="text-white font-bold">{{ user.used_today || 0 }} / {{ user.daily_limit || 0 }}</span>
                         </div>
                         <div class="w-full bg-slate-700 rounded-full h-2.5 mb-6 overflow-hidden">
                             <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
                                 :style="{ width: usagePercent + '%' }"></div>
                         </div>
 
-                        <div class="text-center">
-                            <button
-                                class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm"
-                                @click="showModal('pricing')">
-                                Tarifni yangilash
-                            </button>
-                        </div>
+<!--                        <div class="text-center">-->
+<!--                            <button-->
+<!--                                class="w-full py-2 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors text-sm"-->
+<!--                                @click="showModal('pricing')">-->
+<!--                                Tarifni yangilash-->
+<!--                            </button>-->
+<!--                        </div>-->
                     </div>
 
                     <!-- Transactions Card -->
-                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
-                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <i class="fas fa-history text-blue-400"></i>
-                            Oxirgi o'tkazmalar tarixi
-                        </h3>
-                        <div class="overflow-hidden rounded-xl border border-slate-700/50">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-slate-900/50 text-slate-400">
-                                    <tr>
-                                        <th class="px-3 py-2">Sana</th>
-                                        <th class="px-3 py-2">Summa</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-700/50">
-                                    <tr v-for="t in transactions.slice(0, 5)" :key="t.id">
-                                        <td class="px-3 py-2 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>
-                                        <td class="px-3 py-2 font-mono font-bold text-xs"
-                                            :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">
-                                            {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}
-                                        </td>
-                                    </tr>
-                                    <tr v-if="transactions.length === 0">
-                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+<!--                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">-->
+<!--                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">-->
+<!--                            <i class="fas fa-history text-blue-400"></i>-->
+<!--                            Oxirgi o'tkazmalar tarixi-->
+<!--                        </h3>-->
+<!--                        <div class="overflow-hidden rounded-xl border border-slate-700/50">-->
+<!--                            <table class="w-full text-left text-sm">-->
+<!--                                <thead class="bg-slate-900/50 text-slate-400">-->
+<!--                                    <tr>-->
+<!--                                        <th class="px-3 py-2">Sana</th>-->
+<!--                                        <th class="px-3 py-2">Summa</th>-->
+<!--                                    </tr>-->
+<!--                                </thead>-->
+<!--                                <tbody class="divide-y divide-slate-700/50">-->
+<!--                                    <tr v-for="t in transactions.slice(0, 5)" :key="t.id">-->
+<!--                                        <td class="px-3 py-2 text-slate-400 text-xs">{{ formatDate(t.created_at) }}</td>-->
+<!--                                        <td class="px-3 py-2 font-mono font-bold text-xs"-->
+<!--                                            :class="t.amount >= 0 ? 'text-green-400' : 'text-red-400'">-->
+<!--                                            {{ t.amount >= 0 ? '+' : '' }}{{ formatPrice(t.amount) }}-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                    <tr v-if="transactions.length === 0">-->
+<!--                                        <td colspan="2" class="px-3 py-4 text-center text-slate-500 text-xs">Tarix yo'q-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                </tbody>-->
+<!--                            </table>-->
+<!--                        </div>-->
+<!--                    </div>-->
                 </div>
             </div>
 
