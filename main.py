@@ -230,6 +230,16 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+
+        # Verification Codes Table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS verification_codes (
+                email TEXT PRIMARY KEY,
+                code TEXT NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
         # Seed Default Tariff
         cur.execute("SELECT id FROM tariffs WHERE name = 'Free'")
