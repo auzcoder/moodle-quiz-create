@@ -474,12 +474,10 @@
                             </a>
                         </template>
                         <template v-else>
-                            <a href="/login"
-                                class="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium">
+                            <a href="/login" class="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium">
                                 Kirish
                             </a>
-                            <a href="/register"
-                                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 btn-ripple">
+                            <a href="/register" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 btn-ripple">
                                 Ro'yxatdan o'tish
                             </a>
                         </template>
@@ -487,8 +485,7 @@
 
                     <!-- Mobile Menu Button -->
                     <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-white p-2">
-                        <i :class="mobileMenuOpen ? 'fas fa-times' : 'fas fa-bars'"
-                            class="text-xl transition-transform duration-300"
+                        <i :class="mobileMenuOpen ? 'fas fa-times' : 'fas fa-bars'" class="text-xl transition-transform duration-300"
                             :style="{transform: mobileMenuOpen ? 'rotate(90deg)' : 'rotate(0)'}"></i>
                     </button>
                 </div>
@@ -502,8 +499,7 @@
                         class="text-slate-300 hover:text-white py-2">Xususiyatlar</a>
                     <a href="#how-it-works" @click="mobileMenuOpen = false"
                         class="text-slate-300 hover:text-white py-2">Qanday ishlaydi</a>
-                    <a href="#pricing" @click="mobileMenuOpen = false"
-                        class="text-slate-300 hover:text-white py-2">Tariflar</a>
+<!--                    <a href="#pricing" @click="mobileMenuOpen = false" class="text-slate-300 hover:text-white py-2">Tariflar</a>-->
                     <hr class="border-slate-700">
                     <template v-if="isLoggedIn">
                         <a href="/dashboard"
