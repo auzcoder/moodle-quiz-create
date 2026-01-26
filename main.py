@@ -1289,86 +1289,84 @@ async def upload_file_endpoint(
     authorization: Optional[str] = Header(None),
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
-    if not authorization: raise HTTPException(status_code=401, detail="Unauthorized")
-    
+    # Authorization logic modified to allow Guest access
+    user_id = None
+    is_free_upload = True # Guests are free by default for now
+    file_cost = 0
+
     conn = None
     try:
-        _, token = authorization.split()
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("user_id")
-        
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        # Get User & Tariff Info
-        cur.execute("""
-            SELECT u.tariff_expires_at, u.balance, t.daily_limit, t.file_cost
-            FROM users u
-            LEFT JOIN tariffs t ON u.tariff_id = t.id
-            WHERE u.id = %s
-        """, (user_id,))
-        row = cur.fetchone()
-        
-        if not row: raise HTTPException(status_code=400, detail="Foydalanuvchi topilmadi")
-             
-        expires_at, balance, daily_limit, file_cost = row
-        
-        # Defaults
-        if daily_limit is None: daily_limit = 0
-        if file_cost is None: file_cost = 0
-        if balance is None: balance = 0
-        
-        # Logic: 
-        # 1. If Tariff Active AND Limit Not Reached -> Free
-        # 2. ELSE -> Pay from Balance
-        
-        is_free_upload = False
-        
-        # Check Tariff Validity
-        # Check Monthly Limit
-        now = datetime.datetime.now()
-        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        
-        # Check Effective Usage (Reset if tariff changed)
-        cur.execute("SELECT last_tariff_change_at FROM users WHERE id = %s", (user_id,))
-        last_change_row = cur.fetchone()
-        last_change = last_change_row[0] if last_change_row else None
-        
-        effective_start = start_of_month
-        if last_change and last_change > start_of_month:
-            effective_start = last_change
-            
-        cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s AND status != 'error'", (user_id, effective_start))
-        effective_usage = cur.fetchone()[0]
 
-        # Check Expiry
-        # If exp date exists and is in past -> Expired
-        if expires_at and expires_at < now:
-             # Expired: Fallback to Free/Pay-per-file if implemented, or just block
-             # For now, if expired, usage limit logic might not matter if we treat it as no tariff.
-             pass 
-             
-        # Check Limit
-        if daily_limit > 0 and effective_usage >= daily_limit:
-             pass # Limit reached, so is_free_upload remains False
-        
-        # If tariff is active and not expired and limit not reached, it's a free upload
-        if expires_at and now <= expires_at and (daily_limit == 0 or effective_usage < daily_limit):
-            is_free_upload = True
-        
-        if not is_free_upload:
-            # Check Balance
-            if balance < file_cost:
-                raise HTTPException(status_code=403, detail=f"Mablag' yetarli emas! Fayl narxi: {file_cost} so'm. Hisobingizda: {balance} so'm")
-            
-            # Deduct Balance & Record Transaction
-            new_balance = balance - file_cost
-            cur.execute("UPDATE users SET balance = %s WHERE id = %s", (new_balance, user_id))
-            cur.execute("""
-                INSERT INTO transactions (user_id, amount, type, description, created_at)
-                VALUES (%s, %s, 'usage', %s, NOW())
-            """, (user_id, -file_cost, f"Fayl konvertatsiyasi: {file.filename}"))
-            
+        if authorization:
+            try:
+                # Registered User Logic
+                scheme, token = authorization.split()
+                if scheme.lower() != 'bearer': raise Exception("Invalid Scheme")
+                
+                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                user_id = payload.get("user_id")
+                
+                # Get User & Tariff Info
+                cur.execute("""
+                    SELECT u.tariff_expires_at, u.balance, t.daily_limit, t.file_cost
+                    FROM users u
+                    LEFT JOIN tariffs t ON u.tariff_id = t.id
+                    WHERE u.id = %s
+                """, (user_id,))
+                row = cur.fetchone()
+                
+                if not row: raise HTTPException(status_code=400, detail="Foydalanuvchi topilmadi")
+                    
+                expires_at, balance, daily_limit, file_cost = row
+                
+                # Defaults
+                if daily_limit is None: daily_limit = 0
+                if file_cost is None: file_cost = 0
+                if balance is None: balance = 0
+                
+                is_free_upload = False
+                
+                # Check Tariff Validity
+                now = datetime.datetime.now()
+                start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                
+                # Check Effective Usage
+                cur.execute("SELECT last_tariff_change_at FROM users WHERE id = %s", (user_id,))
+                last_change_row = cur.fetchone()
+                last_change = last_change_row[0] if last_change_row else None
+                
+                effective_start = start_of_month
+                if last_change and last_change > start_of_month:
+                    effective_start = last_change
+                    
+                cur.execute("SELECT COUNT(*) FROM jobs WHERE user_id = %s AND created_at >= %s AND status != 'error'", (user_id, effective_start))
+                effective_usage = cur.fetchone()[0]
+
+                # Check Limit & Expiry
+                if expires_at and now <= expires_at and (daily_limit == 0 or effective_usage < daily_limit):
+                    is_free_upload = True
+                
+                if not is_free_upload:
+                    if balance < file_cost:
+                        raise HTTPException(status_code=403, detail=f"Mablag' yetarli emas! Fayl narxi: {file_cost} so'm. Hisobingizda: {balance} so'm")
+                    
+                    # Deduct Balance
+                    new_balance = balance - file_cost
+                    cur.execute("UPDATE users SET balance = %s WHERE id = %s", (new_balance, user_id))
+                    cur.execute("""
+                        INSERT INTO transactions (user_id, amount, type, description, created_at)
+                        VALUES (%s, %s, 'usage', %s, NOW())
+                    """, (user_id, -file_cost, f"Fayl konvertatsiyasi: {file.filename}"))
+                    
+            except Exception as e:
+                # If auth fails (expired token etc), you might want to block or fail specific errors
+                # For now assuming if auth header is present, it MUST be valid.
+                if isinstance(e, HTTPException): raise e
+                logger.error(f"Auth check failed: {e}")
+                raise HTTPException(status_code=401, detail="Avtorizatsiya xatoligi")
+
         # Proceed with Upload
         job_id = str(uuid.uuid4())
         ext = os.path.splitext(file.filename)[1].lower()
@@ -1385,7 +1383,7 @@ async def upload_file_endpoint(
             shutil.copyfileobj(file.file, buffer)
             
         cur.execute("INSERT INTO jobs (id, filename, status, created_at, user_id, cost) VALUES (%s, %s, %s, %s, %s, %s)", 
-                  (job_id, file.filename, "queued", datetime.datetime.now(), user_id, file_cost if not is_free_upload else 0))
+                  (job_id, file.filename, "queued", datetime.datetime.now(), user_id, file_cost if not is_free_upload and user_id else 0))
         conn.commit()
     
         background_tasks.add_task(process_conversion, job_id, input_path, output_path, False, format)
@@ -1395,8 +1393,12 @@ async def upload_file_endpoint(
         if conn: conn.rollback()
         raise he
     except Exception as e:
-        conn.close()
-    
+        if conn: conn.rollback()
+        logger.error(f"Upload endpoint error: {e}")
+        raise HTTPException(status_code=500, detail="Server xatoligi")
+    finally:
+        if conn: conn.close()
+
     is_legacy = ext == ".doc"
     background_tasks.add_task(process_conversion, job_id, input_path, output_path, is_legacy, format)
     

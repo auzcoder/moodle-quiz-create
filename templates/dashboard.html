@@ -655,7 +655,11 @@
                 onMounted(() => {
                     const token = localStorage.getItem('access_token');
                     if (!token) {
-                        window.location.href = '/login';
+                        // Guest Mode
+                        user.value = { full_name: 'Mehmon', role: 0, balance: 0 };
+                        me.value = { tariff_name: 'Mehmon', daily_limit: 0, used_today: 0 }; 
+                        fetchStats();
+                        // Skip fetchMe and fetchTariffs for guests or handle appropriately
                         return;
                     }
                     user.value = JSON.parse(localStorage.getItem('user') || '{}');
@@ -873,9 +877,12 @@
                     const token = localStorage.getItem('access_token');
 
                     try {
+                        const headers = {};
+                        if (token) headers['Authorization'] = `Bearer ${token}`;
+
                         const res = await fetch('/upload', {
                             method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
+                            headers: headers,
                             body: formData
                         });
                         if (res.status === 403) throw new Error('Limit tugagan yoki tarif muddati o\'tgan');

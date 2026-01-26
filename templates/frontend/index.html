@@ -446,27 +446,32 @@
                             class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
                             <i class="fas fa-file-alt text-white text-lg"></i>
                         </div>
-                        <span class="text-xl font-bold text-white">OsonTest<span class="text-blue-400"> Converter</span></span>
+                        <span class="text-xl font-bold text-white">OsonTest<span class="text-blue-400">
+                                Converter</span></span>
                     </a>
 
                     <!-- Desktop Nav -->
                     <div class="hidden md:flex items-center gap-8">
                         <a href="#features" class="text-slate-300 hover:text-white transition-colors relative group">
                             Xususiyatlar
-                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
+                            <span
+                                class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
                         </a>
-                        <a href="#how-it-works" class="text-slate-300 hover:text-white transition-colors relative group">
+                        <a href="#how-it-works"
+                            class="text-slate-300 hover:text-white transition-colors relative group">
                             Qanday ishlaydi
-                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 group-hover:w-full transition-all duration-300"></span>
+                            <span
+                                class="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 group-hover:w-full transition-all duration-300"></span>
                         </a>
                         <a href="#contact" class="text-slate-300 hover:text-white transition-colors relative group">
                             Texnik qo'llab-quvvatlash
-                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 group-hover:w-full transition-all duration-300"></span>
+                            <span
+                                class="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 group-hover:w-full transition-all duration-300"></span>
                         </a>
-<!--                        <a href="#pricing" class="text-slate-300 hover:text-white transition-colors relative group">-->
-<!--                            Tariflar-->
-<!--                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-pink-500 group-hover:w-full transition-all duration-300"></span>-->
-<!--                        </a>-->
+                        <!--                        <a href="#pricing" class="text-slate-300 hover:text-white transition-colors relative group">-->
+                        <!--                            Tariflar-->
+                        <!--                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-pink-500 group-hover:w-full transition-all duration-300"></span>-->
+                        <!--                        </a>-->
                     </div>
 
                     <!-- Auth Buttons -->
@@ -478,10 +483,12 @@
                             </a>
                         </template>
                         <template v-else>
-                            <a href="/login" class="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium">
+                            <a href="/login"
+                                class="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium">
                                 Kirish
                             </a>
-                            <a href="/register" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 btn-ripple">
+                            <a href="/register"
+                                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 btn-ripple">
                                 Ro'yxatdan o'tish
                             </a>
                         </template>
@@ -489,7 +496,8 @@
 
                     <!-- Mobile Menu Button -->
                     <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-white p-2">
-                        <i :class="mobileMenuOpen ? 'fas fa-times' : 'fas fa-bars'" class="text-xl transition-transform duration-300"
+                        <i :class="mobileMenuOpen ? 'fas fa-times' : 'fas fa-bars'"
+                            class="text-xl transition-transform duration-300"
                             :style="{transform: mobileMenuOpen ? 'rotate(90deg)' : 'rotate(0)'}"></i>
                     </button>
                 </div>
@@ -503,7 +511,7 @@
                         class="text-slate-300 hover:text-white py-2">Xususiyatlar</a>
                     <a href="#how-it-works" @click="mobileMenuOpen = false"
                         class="text-slate-300 hover:text-white py-2">Qanday ishlaydi</a>
-<!--                    <a href="#pricing" @click="mobileMenuOpen = false" class="text-slate-300 hover:text-white py-2">Tariflar</a>-->
+                    <!--                    <a href="#pricing" @click="mobileMenuOpen = false" class="text-slate-300 hover:text-white py-2">Tariflar</a>-->
                     <hr class="border-slate-700">
                     <template v-if="isLoggedIn">
                         <a href="/dashboard"
@@ -561,7 +569,7 @@
                     <!-- CTA Buttons -->
                     <div
                         class="fade-in fade-in-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                        <a :href="isLoggedIn ? '/dashboard' : '/register'"
+                        <a href="/dashboard"
                             class="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold text-lg transition-all shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center gap-3 glow btn-ripple">
                             <span v-if="isLoggedIn">Dashboardga o'tish</span>
                             <span v-else>Bepul boshlash</span>
@@ -744,65 +752,65 @@
         </section>
 
         <!-- Pricing Section -->
-<!--        <section id="pricing" class="py-24 relative">-->
-<!--            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">-->
-<!--                <div class="text-center mb-16">-->
-<!--                    <div-->
-<!--                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">-->
-<!--                        <i class="fas fa-crown text-amber-400 animate-bounce"></i>-->
-<!--                        <span class="text-sm text-amber-300">Tariflar</span>-->
-<!--                    </div>-->
-<!--                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">-->
-<!--                        O'zingizga mos <span class="gradient-text">tarifni</span> tanlang-->
-<!--                    </h2>-->
-<!--                    <p class="text-slate-400 text-lg max-w-2xl mx-auto">-->
-<!--                        Bepul boshlang, kerak bo'lganda yangilang-->
-<!--                    </p>-->
-<!--                </div>-->
+        <!--        <section id="pricing" class="py-24 relative">-->
+        <!--            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">-->
+        <!--                <div class="text-center mb-16">-->
+        <!--                    <div-->
+        <!--                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">-->
+        <!--                        <i class="fas fa-crown text-amber-400 animate-bounce"></i>-->
+        <!--                        <span class="text-sm text-amber-300">Tariflar</span>-->
+        <!--                    </div>-->
+        <!--                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">-->
+        <!--                        O'zingizga mos <span class="gradient-text">tarifni</span> tanlang-->
+        <!--                    </h2>-->
+        <!--                    <p class="text-slate-400 text-lg max-w-2xl mx-auto">-->
+        <!--                        Bepul boshlang, kerak bo'lganda yangilang-->
+        <!--                    </p>-->
+        <!--                </div>-->
 
-<!--                <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">-->
-<!--                    <div v-for="(tariff, index) in tariffs" :key="tariff.id"-->
-<!--                        class="glass rounded-2xl overflow-hidden hover-glow card-3d"-->
-<!--                        :class="{'ring-2 ring-blue-500 scale-105 glow': index === 1}">-->
-<!--                        <div v-if="index === 1"-->
-<!--                            class="bg-gradient-to-r from-blue-600 to-purple-600 text-center py-2 text-sm font-bold text-white">-->
-<!--                            <i class="fas fa-fire mr-1 animate-pulse"></i> Eng ommabop-->
-<!--                        </div>-->
-<!--                        <div class="p-8">-->
-<!--                            <h3 class="text-2xl font-bold text-white mb-2">{{ tariff.name }}</h3>-->
-<!--                            <div class="flex items-end gap-1 mb-6">-->
-<!--                                <span class="text-4xl font-extrabold text-white">{{ formatPrice(tariff.price) }}</span>-->
-<!--                                <span class="text-slate-400 mb-1">/ oy</span>-->
-<!--                            </div>-->
-<!--                            <ul class="space-y-3 mb-8">-->
-<!--                                <li class="flex items-center gap-3 text-slate-300">-->
-<!--                                    <i class="fas fa-check text-green-400"></i>-->
-<!--                                    <span>{{ tariff.daily_limit }} ta fayl oyiga</span>-->
-<!--                                </li>-->
-<!--                                <li class="flex items-center gap-3 text-slate-300">-->
-<!--                                    <i class="fas fa-check text-green-400"></i>-->
-<!--                                    <span>{{ tariff.duration_days }} kun muddat</span>-->
-<!--                                </li>-->
-<!--                                <li class="flex items-center gap-3 text-slate-300">-->
-<!--                                    <i class="fas fa-check text-green-400"></i>-->
-<!--                                    <span>Moodle & Hemis formatlari</span>-->
-<!--                                </li>-->
-<!--                                <li class="flex items-center gap-3 text-slate-300">-->
-<!--                                    <i class="fas fa-check text-green-400"></i>-->
-<!--                                    <span>Rasmlarni qo'llab-quvvatlash</span>-->
-<!--                                </li>-->
-<!--                            </ul>-->
-<!--                            <a :href="isLoggedIn ? '/dashboard' : '/register'"-->
-<!--                                class="block w-full py-3 rounded-xl font-bold text-center transition-all btn-ripple"-->
-<!--                                :class="index === 1 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40' : 'bg-slate-800 text-white hover:bg-slate-700'">-->
-<!--                                <span v-if="isLoggedIn">Dashboardga o'tish</span>-->
-<!--                                <span v-else>Boshlash</span>-->
-<!--                            </a>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </section>-->
+        <!--                <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">-->
+        <!--                    <div v-for="(tariff, index) in tariffs" :key="tariff.id"-->
+        <!--                        class="glass rounded-2xl overflow-hidden hover-glow card-3d"-->
+        <!--                        :class="{'ring-2 ring-blue-500 scale-105 glow': index === 1}">-->
+        <!--                        <div v-if="index === 1"-->
+        <!--                            class="bg-gradient-to-r from-blue-600 to-purple-600 text-center py-2 text-sm font-bold text-white">-->
+        <!--                            <i class="fas fa-fire mr-1 animate-pulse"></i> Eng ommabop-->
+        <!--                        </div>-->
+        <!--                        <div class="p-8">-->
+        <!--                            <h3 class="text-2xl font-bold text-white mb-2">{{ tariff.name }}</h3>-->
+        <!--                            <div class="flex items-end gap-1 mb-6">-->
+        <!--                                <span class="text-4xl font-extrabold text-white">{{ formatPrice(tariff.price) }}</span>-->
+        <!--                                <span class="text-slate-400 mb-1">/ oy</span>-->
+        <!--                            </div>-->
+        <!--                            <ul class="space-y-3 mb-8">-->
+        <!--                                <li class="flex items-center gap-3 text-slate-300">-->
+        <!--                                    <i class="fas fa-check text-green-400"></i>-->
+        <!--                                    <span>{{ tariff.daily_limit }} ta fayl oyiga</span>-->
+        <!--                                </li>-->
+        <!--                                <li class="flex items-center gap-3 text-slate-300">-->
+        <!--                                    <i class="fas fa-check text-green-400"></i>-->
+        <!--                                    <span>{{ tariff.duration_days }} kun muddat</span>-->
+        <!--                                </li>-->
+        <!--                                <li class="flex items-center gap-3 text-slate-300">-->
+        <!--                                    <i class="fas fa-check text-green-400"></i>-->
+        <!--                                    <span>Moodle & Hemis formatlari</span>-->
+        <!--                                </li>-->
+        <!--                                <li class="flex items-center gap-3 text-slate-300">-->
+        <!--                                    <i class="fas fa-check text-green-400"></i>-->
+        <!--                                    <span>Rasmlarni qo'llab-quvvatlash</span>-->
+        <!--                                </li>-->
+        <!--                            </ul>-->
+        <!--                            <a :href="isLoggedIn ? '/dashboard' : '/register'"-->
+        <!--                                class="block w-full py-3 rounded-xl font-bold text-center transition-all btn-ripple"-->
+        <!--                                :class="index === 1 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40' : 'bg-slate-800 text-white hover:bg-slate-700'">-->
+        <!--                                <span v-if="isLoggedIn">Dashboardga o'tish</span>-->
+        <!--                                <span v-else>Boshlash</span>-->
+        <!--                            </a>-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+        <!--                </div>-->
+        <!--            </div>-->
+        <!--        </section>-->
 
         <!-- CTA Section -->
         <section class="py-24 relative overflow-hidden">
@@ -817,10 +825,10 @@
                 <p class="text-xl text-slate-400 mb-8">
                     {{ animatedStats.users }}+ o'qituvchi qatoriga qo'shiling va vaqtingizni tejang
                 </p>
-                <a :href="isLoggedIn ? '/dashboard' : '/register'"
+                <a href="/dashboard"
                     class="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold text-xl transition-all shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 glow btn-ripple">
                     <span v-if="isLoggedIn"><i class="fas fa-th-large mr-2"></i>Dashboardga o'tish</span>
-                    <span v-else>Bepul ro'yxatdan o'tish</span>
+                    <span v-else>Hoziroq boshlash</span>
                     <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
@@ -885,7 +893,8 @@
                             class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                             <i class="fas fa-file-alt text-white text-sm"></i>
                         </div>
-                        <span class="text-lg font-bold text-white">OsonTest<span class="text-blue-400"> Converter</span></span>
+                        <span class="text-lg font-bold text-white">OsonTest<span class="text-blue-400">
+                                Converter</span></span>
                     </div>
                     <div class="flex items-center gap-6 text-slate-400">
                         <a href="#features" class="hover:text-white transition-colors">Xususiyatlar</a>
