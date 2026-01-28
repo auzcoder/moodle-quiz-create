@@ -749,7 +749,7 @@ def convert_to_gift(input_path: str, output_path: str, output_format: str = 'gif
                     # Configure WebOptions for better resolution and PNG support
                     try:
                         doc.WebOptions.AllowPNG = True
-                        doc.WebOptions.PixelsPerInch = 192 # Maximize DPI (192 = ~200% scaling)
+                        doc.WebOptions.PixelsPerInch = 384 # 384 DPI = ~400% of standard 96 DPI
                     except Exception as e:
                         logger.warning(f"Could not set WebOptions: {e}")
                     # ------------------------------
