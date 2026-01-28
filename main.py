@@ -744,6 +744,15 @@ def convert_to_gift(input_path: str, output_path: str, output_format: str = 'gif
                     
                     # Open ReadOnly from temp path
                     doc = word.Documents.Open(FileName=temp_input_path, ReadOnly=True, Visible=False)
+
+                    # --- IMPOROVE IMAGE QUALITY ---
+                    # Configure WebOptions for better resolution and PNG support
+                    try:
+                        doc.WebOptions.AllowPNG = True
+                        doc.WebOptions.PixelsPerInch = 192 # Maximize DPI (192 = ~200% scaling)
+                    except Exception as e:
+                        logger.warning(f"Could not set WebOptions: {e}")
+                    # ------------------------------
                     
                     # Handle Protected View if it occurs (though unlikely in temp)
                     if word.ProtectedViewWindows.Count > 0:
@@ -855,9 +864,15 @@ def convert_to_gift(input_path: str, output_path: str, output_format: str = 'gif
                         # Generate clean HTML tag
                         # format_gift will automatically escape '=' to '\=' later if needed
                         # format_hemis will leave it as is
-                        code_string = f'<img src="data:{mime_type};base64,{encoded_string}">'
-                            
-                        img.replace_with(code_string)
+                        # Generate clean HTML tag
+                        # format_gift will automatically escape '=' to '\=' later if needed
+                        # format_hemis will leave it as is
+                        img['src'] = f"data:{mime_type};base64,{encoded_string}"
+                        
+                        # CRITICAL FIX: Convert the Tag object to a String representation.
+                        # The subsequent questions extraction uses .get_text(), which ignores Tags.
+                        # By converting to string, we ensure the <img> code is treated as text and preserved.
+                        img.replace_with(str(img))
                 except Exception as e:
                     logger.warning(f"Could not encode image: {e}")
 
